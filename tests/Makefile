@@ -35,13 +35,10 @@ all: $(TARGET)
 
 .PHONY: clean clean-all
 
-$(TESTCASES): %.o : %.cpp ../uint128_t.h
+$(TESTCASES): %.o : %.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-../uint128_t.o: ../uint128_t.h ../uint128_t.cpp
-	$(CXX) $(CXXFLAGS) -c ../uint128_t.cpp -o $@
-
-$(TARGET): test.cpp ../uint128_t.o $(TESTCASES)
+$(TARGET): test.cc $(TESTCASES)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $(TARGET)
 
 run: $(TARGET)
@@ -51,4 +48,4 @@ clean:
 	rm -f $(TARGET)
 
 clean-all:
-	rm -f ../uint128_t.o $(TESTCASES)
+	rm -f $(TESTCASES)

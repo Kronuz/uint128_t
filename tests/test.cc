@@ -1,8 +1,9 @@
 /*
-Simple test program for uint128_t
+Simple test program for uint256_t
 
 The MIT License (MIT)
 
+Copyright (c) 2017 German Mendez Bravo (Kronuz) @ german dot mb at gmail.com
 Copyright (c) 2013 - 2017 Jason Lee @ calccrypto at gmail.com
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

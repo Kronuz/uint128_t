@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "uint128_t.h"
+#include "uint256_t.hh"
 
 static const std::map <uint32_t, std::string> tests = {
     std::make_pair(2,  "10000100000101011000010101101100"),
@@ -20,41 +20,45 @@ static const std::map <uint32_t, std::string> tests = {
     std::make_pair(14, "170445352"),
     std::make_pair(15, "ce82d6d4"),
     std::make_pair(16, "8415856c"),
-    // std::make_pair(256, "uint128_t"),
+    // std::make_pair(256, "uint256_t"),
 };
 
-TEST(Function, str){
+TEST(Function, str) {
     // number of leading 0s
     const std::string::size_type leading = 5;
 
+    const uint256_t original(2216002924);
+
+    // test std::to_string()
+    EXPECT_EQ(std::to_string(original), "2216002924");
+
     // make sure all of the test strings create the ASCII version of the string
-    const uint128_t original(2216002924);
-    for(std::pair <uint32_t const, std::string>  t : tests){
+    for (std::pair <uint32_t const, std::string>  t : tests) {
         EXPECT_EQ(original.str(t.first), t.second);
     }
 
     // add leading zeros
-    for(uint32_t base = 2; base <= 16; base++){
+    for (uint32_t base = 2; base <= 16; ++base) {
         EXPECT_EQ(original.str(base, tests.at(base).size() + leading), std::string(leading, '0') + tests.at(base));
     }
 }
 
-TEST(External, ostream){
-    const uint128_t value(0xfedcba9876543210ULL);
+TEST(External, ostream) {
+    const uint256_t value(0xfedcba9876543210ULL);
 
-    // write out octal uint128_t
+    // write out octal uint256_t
     std::stringstream oct; oct << std::oct << value;
     EXPECT_EQ(oct.str(), "1773345651416625031020");
 
-    // write out decimal uint128_t
+    // write out decimal uint256_t
     std::stringstream dec; dec << std::dec << value;
     EXPECT_EQ(dec.str(), "18364758544493064720");
 
-    // write out hexadecimal uint128_t
+    // write out hexadecimal uint256_t
     std::stringstream hex; hex << std::hex << value;
     EXPECT_EQ(hex.str(), "fedcba9876543210");
 
     // zero
-    std::stringstream zero; zero << uint128_t();
+    std::stringstream zero; zero << uint256_t(0);
     EXPECT_EQ(zero.str(), "0");
 }
