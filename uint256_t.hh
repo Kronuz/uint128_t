@@ -895,6 +895,59 @@ class uint256_t {
 			}
 			return out;
 		}
+
+		template <typename Result = uint256_t, typename = std::enable_if_t<std::is_same<uint256_t, std::decay_t<Result>>::value>>
+		uint256_t serialise() const {
+			return *this;
+		}
+
+		template <typename Result = std::vector<uint8_t>, typename = std::enable_if_t<!std::is_same<uint256_t, std::decay_t<Result>>::value>>
+		Result serialise() const {
+			char buf[32];
+			*(reinterpret_cast<uint64_t*>(buf)) = number[0];
+			*(reinterpret_cast<uint64_t*>(buf) + 1) = number[1];
+			*(reinterpret_cast<uint64_t*>(buf) + 2) = number[2];
+			*(reinterpret_cast<uint64_t*>(buf) + 3) = number[3];
+
+			auto ptr = buf + 32;
+			const auto min_buf = buf + 1;
+			while (ptr != min_buf && !*--ptr);
+			auto length = ptr - buf + 1;
+			std::reverse(buf, ptr + 1);
+			return Result(buf, buf + length);
+		}
+
+		static uint256_t unserialise(const char* bytes, size_t size) {
+			if (size > 32) {
+				throw std::invalid_argument("Invalid serialization");
+			}
+			char buf[32];
+			std::memset(buf + size, 0, sizeof(buf) - size);
+			for (; size; --size, ++bytes) {
+				buf[size - 1] = *bytes;
+			}
+			return uint256_t(
+				*(reinterpret_cast<uint64_t*>(buf) + 3),
+				*(reinterpret_cast<uint64_t*>(buf) + 2),
+				*(reinterpret_cast<uint64_t*>(buf) + 1),
+				*(reinterpret_cast<uint64_t*>(buf))
+			);
+		}
+
+		template<typename T, std::size_t N>
+		static uint256_t unserialise(T (&s)[N]) {
+			return unserialise(s, N - 1);
+		}
+
+		template <typename T = std::vector<uint8_t>, typename = std::enable_if_t<!std::is_integral<T>::value>>
+		static uint256_t unserialise(const T& bytes) {
+			return unserialise(bytes.data(), bytes.size());
+		}
+
+		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		static uint256_t unserialise(T num) {
+			return uint256_t(num);
+		}
 };
 
 namespace std {  // This is probably not a good idea
