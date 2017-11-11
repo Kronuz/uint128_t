@@ -70,17 +70,52 @@ class uint256_t {
 		uint256_t(const S0 & rhs0)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs0), 0, 0, 0 }})) { }
 
-		template <typename S0, typename S1>
+		template <typename S0, typename S1, typename = std::enable_if_t<std::is_integral<S0>::value>>
 		uint256_t(const S0 & rhs0, const S1 & rhs1)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0), 0, 0 }})) { }
 
-		template <typename S0, typename S1, typename S2>
+		template <typename S0, typename S1, typename S2, typename = std::enable_if_t<std::is_integral<S0>::value>>
 		uint256_t(const S0 & rhs0, const S1 & rhs1, const S2 & rhs2)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs2), static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0), 0 }})) { }
 
-		template <typename S0, typename S1, typename S2, typename S3>
+		template <typename S0, typename S1, typename S2, typename S3, typename = std::enable_if_t<std::is_integral<S0>::value>>
 		uint256_t(const S0 & rhs0, const S1 & rhs1, const S2 & rhs2, const S3 & rhs3)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs3), static_cast<uint64_t>(rhs2), static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0) }})) { }
+
+		uint256_t(const char* bytes, size_t size, size_t base)
+			: number(std::array<uint64_t, 4>({{ 0, 0, 0, 0 }})) {
+			if (base >= 2 && base <= 36) {
+				for (; size; --size, ++bytes) {
+					uint8_t d = std::tolower(*bytes);
+					if (std::isdigit(d)) { // 0-9
+						d -= '0';
+					} else {
+						d -= 'a' - 10;
+					}
+					if (d >= base) {
+						throw std::runtime_error("Error: Not a digit in base " + std::to_string(base) + ": '" + std::string(1, *bytes) + "'");
+					}
+					*this = (*this * base) + d;
+				}
+			} else if (base == 256) {
+				for (; size; --size, ++bytes) {
+					*this = (*this << 8) | (*bytes & 0xff);
+				}
+			} else {
+				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
+			}
+		}
+
+		template <typename T, std::size_t N>
+		uint256_t(T (&s)[N], size_t base=10)
+			: uint256_t(s, N - 1, base) { }
+
+		template <typename T>
+		uint256_t(const std::vector<T>& bytes, size_t base=10)
+			: uint256_t(bytes.data(), bytes.size(), base) { }
+
+		uint256_t(const std::string& bytes, size_t base=10)
+			: uint256_t(bytes.data(), bytes.size(), base) { }
 
 		//  RHS input args only
 
