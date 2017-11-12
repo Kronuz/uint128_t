@@ -66,19 +66,19 @@ class uint256_t {
 		uint256_t(uint256_t&& rhs)
 			: number(std::move(rhs.number)) { }
 
-		template <typename S0, typename = std::enable_if_t<std::is_integral<S0>::value>>
+		template <typename S0, typename = typename std::enable_if<std::is_integral<S0>::value>::type>
 		uint256_t(const S0 & rhs0)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs0), 0, 0, 0 }})) { }
 
-		template <typename S0, typename S1, typename = std::enable_if_t<std::is_integral<S0>::value>>
+		template <typename S0, typename S1, typename = typename std::enable_if<std::is_integral<S0>::value>::type>
 		uint256_t(const S0 & rhs0, const S1 & rhs1)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0), 0, 0 }})) { }
 
-		template <typename S0, typename S1, typename S2, typename = std::enable_if_t<std::is_integral<S0>::value>>
+		template <typename S0, typename S1, typename S2, typename = typename std::enable_if<std::is_integral<S0>::value>::type>
 		uint256_t(const S0 & rhs0, const S1 & rhs1, const S2 & rhs2)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs2), static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0), 0 }})) { }
 
-		template <typename S0, typename S1, typename S2, typename S3, typename = std::enable_if_t<std::is_integral<S0>::value>>
+		template <typename S0, typename S1, typename S2, typename S3, typename = typename std::enable_if<std::is_integral<S0>::value>::type>
 		uint256_t(const S0 & rhs0, const S1 & rhs1, const S2 & rhs2, const S3 & rhs3)
 			: number(std::array<uint64_t, 4>({{ static_cast<uint64_t>(rhs3), static_cast<uint64_t>(rhs2), static_cast<uint64_t>(rhs1), static_cast<uint64_t>(rhs0) }})) { }
 
@@ -139,7 +139,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator=(const T & rhs) {
 			number[3] = 0;
 			number[2] = 0;
@@ -193,7 +193,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator&(const T & rhs) const {
 			return uint256_t(number[0] & static_cast<uint64_t>(rhs));
 		}
@@ -206,7 +206,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator&=(const T & rhs) {
 			number[0] &= rhs;
 			number[1] = 0;
@@ -224,7 +224,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator|(const T & rhs) const {
 			return uint256_t(
 				number[3],
@@ -242,7 +242,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator|=(const T & rhs) {
 			number[0] &= rhs;
 			return *this;
@@ -257,7 +257,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator^(const T & rhs) const {
 			return uint256_t(
 				number[3],
@@ -275,7 +275,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator^=(const T & rhs) {
 			number[0] ^= rhs;
 			return *this;
@@ -354,7 +354,7 @@ class uint256_t {
 			}
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator<<(const T & rhs) const {
 			return *this << uint256_t(rhs);
 		}
@@ -364,7 +364,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator<<=(const T & rhs) {
 			*this = *this << uint256_t(rhs);
 			return *this;
@@ -433,7 +433,7 @@ class uint256_t {
 			}
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator>>(const T & rhs) const {
 			return *this >> uint256_t(rhs);
 		}
@@ -443,7 +443,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator>>=(const T & rhs) {
 			*this = *this >> uint256_t(rhs);
 			return *this;
@@ -462,12 +462,12 @@ class uint256_t {
 			return static_cast<bool>(*this) || rhs;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator&&(const T & rhs) {
 			return static_cast<bool>(*this) && rhs;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator||(const T & rhs) {
 			return static_cast<bool>(*this) || rhs;
 		}
@@ -482,7 +482,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator==(const T & rhs) const {
 			return (
 				!number[3] &&
@@ -501,7 +501,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator!=(const T & rhs) const {
 			return (
 				number[3] |
@@ -529,7 +529,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator>(const T & rhs) const {
 			return (
 				number[3] ||
@@ -557,7 +557,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator<(const T & rhs) const {
 			return (
 				!number[3] &&
@@ -585,7 +585,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator>=(const T & rhs) const {
 			return (
 				number[3] ||
@@ -613,7 +613,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		bool operator<=(const T & rhs) const {
 			return (
 				!number[3] &&
@@ -637,7 +637,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator+(const T & rhs) const {
 			auto n0 = number[0] + static_cast<uint64_t>(rhs);
 			return uint256_t(
@@ -656,7 +656,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator+=(const T & rhs) {
 			number[1] += ((number[0] + rhs) < number[0]);
 			number[0] += rhs;
@@ -676,7 +676,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator-(const T & rhs) const {
 			auto n0 = number[0] - static_cast<uint64_t>(rhs);
 			return uint256_t(
@@ -692,7 +692,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator-=(const T & rhs) {
 			*this = *this - rhs;
 			return *this;
@@ -811,7 +811,7 @@ class uint256_t {
 			);
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator*(const T & rhs) const {
 			return *this * uint256_t(rhs);
 		}
@@ -821,7 +821,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator*=(const T & rhs) {
 			*this = *this * uint256_t(rhs);
 			return *this;
@@ -871,7 +871,7 @@ class uint256_t {
 			return divmod(rhs).first;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator/(const T & rhs) const {
 			return *this / uint256_t(rhs);
 		}
@@ -881,7 +881,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator/=(const T & rhs) {
 			*this = *this / uint256_t(rhs);
 			return *this;
@@ -891,7 +891,7 @@ class uint256_t {
 			return divmod(rhs).second;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t operator%(const T & rhs) const {
 			return *this % uint256_t(rhs);
 		}
@@ -901,7 +901,7 @@ class uint256_t {
 			return *this;
 		}
 
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint256_t& operator%=(const T & rhs) {
 			*this = *this % uint256_t(rhs);
 			return *this;
@@ -1017,32 +1017,32 @@ namespace std {  // This is probably not a good idea
 // If the output is not a bool, casts to type T
 
 // Bitwise Operators
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator&(const T & lhs, const uint256_t& rhs) {
 	return rhs & lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator&=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(rhs & lhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator|(const T & lhs, const uint256_t& rhs) {
 	return rhs | lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator|=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(rhs | lhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator^(const T & lhs, const uint256_t& rhs) {
 	return rhs ^ lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator^=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(rhs ^ lhs);
 }
@@ -1076,7 +1076,7 @@ inline uint256_t operator<<(const int64_t  & lhs, const uint256_t& rhs) {
 	return uint256_t(lhs) << rhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator<<=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(uint256_t(lhs) << rhs);
 }
@@ -1109,89 +1109,89 @@ inline uint256_t operator>>(const int64_t  & lhs, const uint256_t& rhs) {
 	return uint256_t(lhs) >> rhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator>>=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(uint256_t(lhs) >> rhs);
 }
 
 // Comparison Operators
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator==(const T & lhs, const uint256_t& rhs) {
 	return rhs == lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator!=(const T & lhs, const uint256_t& rhs) {
 	return rhs != lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>(const T & lhs, const uint256_t& rhs) {
 	return rhs < lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<(const T & lhs, const uint256_t& rhs) {
 	return rhs > lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>=(const T & lhs, const uint256_t& rhs) {
 	return rhs <= lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<=(const T & lhs, const uint256_t& rhs) {
 	return rhs >= lhs;
 }
 
 // Arithmetic Operators
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator+(const T & lhs, const uint256_t& rhs) {
 	return rhs + lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator+=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(rhs + lhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator-(const T & lhs, const uint256_t& rhs) {
 	return -(rhs - lhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator-=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(-(rhs - lhs));
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator*(const T & lhs, const uint256_t& rhs) {
 	return rhs * lhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator*=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(rhs * lhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator/(const T & lhs, const uint256_t& rhs) {
 	return uint256_t(lhs) / rhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator/=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(uint256_t(lhs) / rhs);
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint256_t operator%(const T & lhs, const uint256_t& rhs) {
 	return uint256_t(lhs) % rhs;
 }
 
-template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T & operator%=(T & lhs, const uint256_t& rhs) {
 	return lhs = static_cast<T>(uint256_t(lhs) % rhs);
 }
