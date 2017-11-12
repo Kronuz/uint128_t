@@ -729,83 +729,85 @@ class uint256_t {
 				}
 			}
 
+			uint64_t result[8];
+
 			// first row
-			uint64_t h32 = (products[0][7] & 0xffffffff);
-			uint64_t g32 = (products[0][6] & 0xffffffff) + (products[0][7] >> 32);
-			uint64_t f32 = (products[0][5] & 0xffffffff) + (products[0][6] >> 32);
-			uint64_t e32 = (products[0][4] & 0xffffffff) + (products[0][5] >> 32);
-			uint64_t d32 = (products[0][3] & 0xffffffff) + (products[0][4] >> 32);
-			uint64_t c32  = (products[0][2] & 0xffffffff) + (products[0][3] >> 32);
-			uint64_t b32 = (products[0][1] & 0xffffffff) + (products[0][2] >> 32);
-			uint64_t a32  = (products[0][0] & 0xffffffff) + (products[0][1] >> 32);
+			result[0] = (products[0][7] & 0xffffffff);
+			result[1] = (products[0][6] & 0xffffffff) + (products[0][7] >> 32);
+			result[2] = (products[0][5] & 0xffffffff) + (products[0][6] >> 32);
+			result[3] = (products[0][4] & 0xffffffff) + (products[0][5] >> 32);
+			result[4] = (products[0][3] & 0xffffffff) + (products[0][4] >> 32);
+			result[5] = (products[0][2] & 0xffffffff) + (products[0][3] >> 32);
+			result[6] = (products[0][1] & 0xffffffff) + (products[0][2] >> 32);
+			result[7] = (products[0][0] & 0xffffffff) + (products[0][1] >> 32);
 
 			// second row
-			g32 += (products[1][7] & 0xffffffff);
-			f32 += (products[1][6] & 0xffffffff) + (products[1][7] >> 32);
-			e32 += (products[1][5] & 0xffffffff) + (products[1][6] >> 32);
-			d32 += (products[1][4] & 0xffffffff) + (products[1][5] >> 32);
-			c32 += (products[1][3] & 0xffffffff) + (products[1][4] >> 32);
-			b32 += (products[1][2] & 0xffffffff) + (products[1][3] >> 32);
-			a32 += (products[1][1] & 0xffffffff) + (products[1][2] >> 32);
+			result[1] += (products[1][7] & 0xffffffff);
+			result[2] += (products[1][6] & 0xffffffff) + (products[1][7] >> 32);
+			result[3] += (products[1][5] & 0xffffffff) + (products[1][6] >> 32);
+			result[4] += (products[1][4] & 0xffffffff) + (products[1][5] >> 32);
+			result[5] += (products[1][3] & 0xffffffff) + (products[1][4] >> 32);
+			result[6] += (products[1][2] & 0xffffffff) + (products[1][3] >> 32);
+			result[7] += (products[1][1] & 0xffffffff) + (products[1][2] >> 32);
 
 			// third row
-			f32 += (products[2][7] & 0xffffffff);
-			e32 += (products[2][6] & 0xffffffff) + (products[2][7] >> 32);
-			d32 += (products[2][5] & 0xffffffff) + (products[2][6] >> 32);
-			c32 += (products[2][4] & 0xffffffff) + (products[2][5] >> 32);
-			b32 += (products[2][3] & 0xffffffff) + (products[2][4] >> 32);
-			a32 += (products[2][1] & 0xffffffff) + (products[2][3] >> 32);
+			result[2] += (products[2][7] & 0xffffffff);
+			result[3] += (products[2][6] & 0xffffffff) + (products[2][7] >> 32);
+			result[4] += (products[2][5] & 0xffffffff) + (products[2][6] >> 32);
+			result[5] += (products[2][4] & 0xffffffff) + (products[2][5] >> 32);
+			result[6] += (products[2][3] & 0xffffffff) + (products[2][4] >> 32);
+			result[7] += (products[2][1] & 0xffffffff) + (products[2][3] >> 32);
 
 			// fourth row
-			e32 += (products[3][7] & 0xffffffff);
-			d32 += (products[3][6] & 0xffffffff) + (products[3][7] >> 32);
-			c32 += (products[3][5] & 0xffffffff) + (products[3][6] >> 32);
-			b32 += (products[3][4] & 0xffffffff) + (products[3][5] >> 32);
-			a32 += (products[3][3] & 0xffffffff) + (products[3][4] >> 32);
+			result[3] += (products[3][7] & 0xffffffff);
+			result[4] += (products[3][6] & 0xffffffff) + (products[3][7] >> 32);
+			result[5] += (products[3][5] & 0xffffffff) + (products[3][6] >> 32);
+			result[6] += (products[3][4] & 0xffffffff) + (products[3][5] >> 32);
+			result[7] += (products[3][3] & 0xffffffff) + (products[3][4] >> 32);
 
 			// fifth row
-			d32 += (products[4][7] & 0xffffffff);
-			c32 += (products[4][6] & 0xffffffff) + (products[4][7] >> 32);
-			b32 += (products[4][5] & 0xffffffff) + (products[4][6] >> 32);
-			a32 += (products[4][4] & 0xffffffff) + (products[4][5] >> 32);
+			result[4] += (products[4][7] & 0xffffffff);
+			result[5] += (products[4][6] & 0xffffffff) + (products[4][7] >> 32);
+			result[6] += (products[4][5] & 0xffffffff) + (products[4][6] >> 32);
+			result[7] += (products[4][4] & 0xffffffff) + (products[4][5] >> 32);
 
 			// sixth row
-			c32 += (products[5][7] & 0xffffffff);
-			b32 += (products[5][6] & 0xffffffff) + (products[5][7] >> 32);
-			a32 += (products[5][5] & 0xffffffff) + (products[5][6] >> 32);
+			result[5] += (products[5][7] & 0xffffffff);
+			result[6] += (products[5][6] & 0xffffffff) + (products[5][7] >> 32);
+			result[7] += (products[5][5] & 0xffffffff) + (products[5][6] >> 32);
 
 			// seventh row
-			b32 += (products[6][7] & 0xffffffff);
-			a32 += (products[6][6] & 0xffffffff) + (products[6][7] >> 32);
+			result[6] += (products[6][7] & 0xffffffff);
+			result[7] += (products[6][6] & 0xffffffff) + (products[6][7] >> 32);
 
 			// eight row
-			a32 += (products[7][7] & 0xffffffff);
+			result[7] += (products[7][7] & 0xffffffff);
 
 			// move carry to next digit
-			g32 += h32 >> 32;
-			f32 += g32 >> 32;
-			e32 += f32 >> 32;
-			d32 += e32 >> 32;
-			c32 += d32 >> 32;
-			b32 += c32 >> 32;
-			a32 += b32 >> 32;
+			result[1] += result[0] >> 32;
+			result[2] += result[1] >> 32;
+			result[3] += result[2] >> 32;
+			result[4] += result[3] >> 32;
+			result[5] += result[4] >> 32;
+			result[6] += result[5] >> 32;
+			result[7] += result[6] >> 32;
 
 			// remove carry from current digit
-			h32 &= 0xffffffff;
-			g32 &= 0xffffffff;
-			f32 &= 0xffffffff;
-			e32 &= 0xffffffff;
-			d32 &= 0xffffffff;
-			c32 &= 0xffffffff;
-			b32 &= 0xffffffff;
-			a32 &= 0xffffffff;
+			result[0] &= 0xffffffff;
+			result[1] &= 0xffffffff;
+			result[2] &= 0xffffffff;
+			result[3] &= 0xffffffff;
+			result[4] &= 0xffffffff;
+			result[5] &= 0xffffffff;
+			result[6] &= 0xffffffff;
+			result[7] &= 0xffffffff;
 
 			// combine components
 			return uint256_t(
-				(a32 << 32) | b32,
-				(c32 << 32) | d32,
-				(e32 << 32) | f32,
-				(g32 << 32) | h32
+				(result[7] << 32) | result[6],
+				(result[5] << 32) | result[4],
+				(result[3] << 32) | result[2],
+				(result[1] << 32) | result[0]
 			);
 		}
 
