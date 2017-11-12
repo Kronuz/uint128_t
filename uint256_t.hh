@@ -39,6 +39,7 @@ Converted to header-only by German Mendez Bravo (Kronuz)
 
 #include <array>
 #include <string>
+#include <cstring>
 #include <cstdint>
 #include <iostream>
 #include <stdexcept>
