@@ -98,9 +98,19 @@ class uint256_t {
 					*this = (*this * base) + d;
 				}
 			} else if (base == 256) {
-				for (; size; --size, ++bytes) {
-					*this = (*this << 8) | (*bytes & 0xff);
+				if (size > 32) {
+					bytes += size - 32 + 1;
+					size = 32;
 				}
+				char buf[32];
+				std::memset(buf + size, 0, sizeof(buf) - size);
+				for (; size; --size, ++bytes) {
+					buf[size - 1] = *bytes;
+				}
+				number[3] = *(reinterpret_cast<uint64_t*>(buf) + 3);
+				number[2] = *(reinterpret_cast<uint64_t*>(buf) + 2);
+				number[1] = *(reinterpret_cast<uint64_t*>(buf) + 1);
+				number[0] = *(reinterpret_cast<uint64_t*>(buf));
 			} else {
 				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
 			}
@@ -131,7 +141,10 @@ class uint256_t {
 
 		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
 		uint256_t& operator=(const T & rhs) {
-			number = { rhs, 0, 0, 0 };
+			number[3] = 0;
+			number[2] = 0;
+			number[1] = 0;
+			number[0] = rhs;
 			return *this;
 		}
 
@@ -951,81 +964,40 @@ class uint256_t {
 		}
 
 		// Get string representation of value
-		std::string str(uint8_t base=10, const unsigned int & len=0) const {
-			if ((base < 2) || (base > 16)) {
-				throw std::invalid_argument("Base must be in the range [2, 16]");
-			}
-			std::string out = "";
-			if (!*this) {
-				out = "0";
+		template <typename Result = std::string>
+		Result str(size_t base=10) const {
+			if (base >= 2 && base <= 36) {
+				Result result;
+				if (!*this) {
+					result.push_back('0');
+				} else {
+					std::pair<uint256_t, uint256_t> qr(*this, uint256_0());
+					do {
+						qr = qr.first.divmod(base);
+						if (qr.second < 10) {
+							result.push_back((uint8_t)qr.second + '0');
+						} else {
+							result.push_back((uint8_t)qr.second + 'a' - 10);
+						}
+					} while (qr.first);
+				}
+				std::reverse(result.begin(), result.end());
+				return result;
+			} else if (base == 256) {
+				char buf[32];
+				*(reinterpret_cast<uint64_t*>(buf)) = number[0];
+				*(reinterpret_cast<uint64_t*>(buf) + 1) = number[1];
+				*(reinterpret_cast<uint64_t*>(buf) + 2) = number[2];
+				*(reinterpret_cast<uint64_t*>(buf) + 3) = number[3];
+				auto ptr = buf + 32;
+				const auto min_buf = buf + 1;
+				while (ptr != min_buf && !*--ptr);
+				auto length = ptr - buf + 1;
+				std::reverse(buf, ptr + 1);
+				return Result(buf, buf + length);
 			} else {
-				std::pair<uint256_t, uint256_t> qr(*this, uint256_0());
-				do {
-					qr = qr.first.divmod(base);
-					out = "0123456789abcdef"[(uint8_t) qr.second] + out;
-				} while (qr.first);
+				throw std::invalid_argument("Base must be in the range [2, 36]");
 			}
-			if (out.size() < len) {
-				out = std::string(len - out.size(), '0') + out;
-			}
-			return out;
-		}
-
-		template <typename Result = uint256_t, typename = std::enable_if_t<std::is_same<uint256_t, std::decay_t<Result>>::value>>
-		uint256_t serialise() const {
-			return *this;
-		}
-
-		template <typename Result = std::vector<uint8_t>, typename = std::enable_if_t<!std::is_same<uint256_t, std::decay_t<Result>>::value>>
-		Result serialise() const {
-			char buf[32];
-			*(reinterpret_cast<uint64_t*>(buf)) = number[0];
-			*(reinterpret_cast<uint64_t*>(buf) + 1) = number[1];
-			*(reinterpret_cast<uint64_t*>(buf) + 2) = number[2];
-			*(reinterpret_cast<uint64_t*>(buf) + 3) = number[3];
-
-			auto ptr = buf + 32;
-			const auto min_buf = buf + 1;
-			while (ptr != min_buf && !*--ptr);
-			auto length = ptr - buf + 1;
-			std::reverse(buf, ptr + 1);
-			return Result(buf, buf + length);
-		}
-
-		static uint256_t unserialise(const char* bytes, size_t size) {
-			if (size > 32) {
-				throw std::invalid_argument("Can unserialise a maximum of 32 characters");
-			}
-			char buf[32];
-			std::memset(buf + size, 0, sizeof(buf) - size);
-			for (; size; --size, ++bytes) {
-				buf[size - 1] = *bytes;
-			}
-			return uint256_t(
-				*(reinterpret_cast<uint64_t*>(buf) + 3),
-				*(reinterpret_cast<uint64_t*>(buf) + 2),
-				*(reinterpret_cast<uint64_t*>(buf) + 1),
-				*(reinterpret_cast<uint64_t*>(buf))
-			);
-		}
-
-		template <typename T, std::size_t N>
-		static uint256_t unserialise(T (&s)[N]) {
-			return unserialise(s, N - 1);
-		}
-
-		template <typename T>
-		static uint256_t unserialise(const std::vector<T>& bytes) {
-			return unserialise(bytes.data(), bytes.size());
-		}
-
-		static uint256_t unserialise(const std::string& bytes) {
-			return unserialise(bytes.data(), bytes.size());
-		}
-
-		template <typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-		static uint256_t unserialise(T num) {
-			return uint256_t(num);
 		}
 };
 
