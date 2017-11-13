@@ -46,6 +46,4 @@ run: $(TARGET)
 
 clean:
 	rm -f $(TARGET)
-
-clean-all:
 	rm -f $(TESTCASES)
