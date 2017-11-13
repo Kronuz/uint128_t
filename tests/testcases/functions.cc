@@ -24,9 +24,6 @@ static const std::map <uint32_t, std::string> tests = {
 };
 
 TEST(Function, str) {
-    // number of leading 0s
-    const std::string::size_type leading = 5;
-
     const uint256_t original(2216002924);
 
     // test std::to_string()
@@ -35,11 +32,6 @@ TEST(Function, str) {
     // make sure all of the test strings create the ASCII version of the string
     for (std::pair <uint32_t const, std::string>  t : tests) {
         EXPECT_EQ(original.str(t.first), t.second);
-    }
-
-    // add leading zeros
-    for (uint32_t base = 2; base <= 16; ++base) {
-        EXPECT_EQ(original.str(base, tests.at(base).size() + leading), std::string(leading, '0') + tests.at(base));
     }
 }
 

@@ -968,7 +968,7 @@ class uint256_t {
 
 		// Get string representation of value
 		template <typename Result = std::string>
-		Result str(size_t base=10) const {
+		Result str(size_t base = 10) const {
 			if (base >= 2 && base <= 36) {
 				Result result;
 				if (!*this) {
