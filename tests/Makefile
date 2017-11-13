@@ -33,7 +33,7 @@ TESTCASES += testcases/type_traits.o
 
 all: $(TARGET)
 
-.PHONY: clean clean-all
+.PHONY: clean
 
 $(TESTCASES): %.o : %.cc
 	$(CXX) $(CXXFLAGS) -c $< -o $@
