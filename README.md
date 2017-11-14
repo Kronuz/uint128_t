@@ -24,7 +24,9 @@ support any number of bits.
 MIT License. See [LICENSE](LICENSE) for details.
 
 Copyright (c) 2017 German Mendez Bravo (Kronuz) @ german dot mb at gmail.com
+
 Copyright (c) 2013 - 2017 Jason Lee @ calccrypto at gmail.com
+
 
 [license-url]: https://github.com/Kronuz/uint_t/blob/master/LICENSE
 [license-img]: https://img.shields.io/github/license/Kronuz/uint_t.svg
