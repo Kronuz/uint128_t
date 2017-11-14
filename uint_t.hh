@@ -160,15 +160,15 @@ class uint_t {
 					*this = (*this * base) + d;
 				}
 			} else if (base == 256) {
+				bytes += size - 1;
 				while (size) {
 					uint64_t num = 0;
-					uint8_t* ptr_s = reinterpret_cast<uint8_t*>(&num);
-					uint8_t* ptr = ptr_s + 8 - 1;
-					for (; size && ptr >= ptr_s; --size, ++bytes, --ptr) {
-						*ptr = *bytes;
+					uint8_t* ptr = reinterpret_cast<uint8_t*>(&num);
+					uint8_t* ptr_e = ptr + 8;
+					for (; size && ptr < ptr_e; --size) {
+						*ptr++ = *bytes--;
 					}
 					_value.push_back(num);
-					std::reverse(_value.begin(), _value.end());
 				}
 			} else {
 				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
