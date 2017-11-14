@@ -83,50 +83,6 @@ class uint_t {
 			_value.push_back(static_cast<uint64_t>(value));
 		}
 
-		void _uint_t(const char* bytes, size_t size, size_t base) {
-			if (base >= 2 && base <= 36) {
-				for (; size; --size, ++bytes) {
-					uint8_t d = std::tolower(*bytes);
-					if (std::isdigit(d)) { // 0-9
-						d -= '0';
-					} else {
-						d -= 'a' - 10;
-					}
-					if (d >= base) {
-						throw std::runtime_error("Error: Not a digit in base " + std::to_string(base) + ": '" + std::string(1, *bytes) + "'");
-					}
-					*this = (*this * base) + d;
-				}
-			} else if (base == 256) {
-				while (size) {
-					uint64_t num = 0;
-					uint8_t* ptr_s = reinterpret_cast<uint8_t*>(&num);
-					uint8_t* ptr = ptr_s + 8 - 1;
-					for (; size && ptr >= ptr_s; --size, ++bytes, --ptr) {
-						*ptr = *bytes;
-					}
-					_value.push_back(num);
-					std::reverse(_value.begin(), _value.end());
-				}
-			} else {
-				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
-			}
-		}
-
-		template <typename T, size_t N>
-		void _uint_t(T (&s)[N], size_t base=10) {
-			_uint_t(s, N - 1, base);
-		}
-
-		template <typename T>
-		void _uint_t(const std::vector<T>& bytes, size_t base=10) {
-			_uint_t(bytes.data(), bytes.size(), base);
-		}
-
-		void _uint_t(const std::string& bytes, size_t base=10) {
-			_uint_t(bytes.data(), bytes.size(), base);
-		}
-
 		void trim(uint64_t mask = 0) {
 			auto rit = _value.rbegin();
 			auto rit_e = _value.rend();
@@ -172,12 +128,63 @@ class uint_t {
 			: _cf(false),
 			  _value(std::move(num._value)) { }
 
-		template <typename... Args>
-		uint_t(Args... args)
+		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+		uint_t(const T & value)
 			: _cf(false) {
-			_uint_t(args...);
+			if (value) {
+				_value.push_back(static_cast<uint64_t>(value));
+			}
+		}
+
+		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+		uint_t(const T & value, Args... args)
+			: _cf(false) {
+		    _uint_t(args...);
+			_value.push_back(static_cast<uint64_t>(value));
 			trim();
 		}
+
+		explicit uint_t(const char* bytes, size_t size, size_t base)
+			: _cf(false) {
+			if (base >= 2 && base <= 36) {
+				for (; size; --size, ++bytes) {
+					uint8_t d = std::tolower(*bytes);
+					if (std::isdigit(d)) { // 0-9
+						d -= '0';
+					} else {
+						d -= 'a' - 10;
+					}
+					if (d >= base) {
+						throw std::runtime_error("Error: Not a digit in base " + std::to_string(base) + ": '" + std::string(1, *bytes) + "'");
+					}
+					*this = (*this * base) + d;
+				}
+			} else if (base == 256) {
+				while (size) {
+					uint64_t num = 0;
+					uint8_t* ptr_s = reinterpret_cast<uint8_t*>(&num);
+					uint8_t* ptr = ptr_s + 8 - 1;
+					for (; size && ptr >= ptr_s; --size, ++bytes, --ptr) {
+						*ptr = *bytes;
+					}
+					_value.push_back(num);
+					std::reverse(_value.begin(), _value.end());
+				}
+			} else {
+				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
+			}
+		}
+
+		template <typename T, size_t N>
+		explicit uint_t(T (&s)[N], size_t base=10)
+			: uint_t(s, N - 1, base) { }
+
+		template <typename T>
+		explicit uint_t(const std::vector<T>& bytes, size_t base=10)
+			: uint_t(bytes.data(), bytes.size(), base) { }
+
+		explicit uint_t(const std::string& bytes, size_t base=10)
+			: uint_t(bytes.data(), bytes.size(), base) { }
 
 		//  RHS input args only
 
