@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "uint256_t.hh"
+#include "uint_t.hh"
 
 TEST(Comparison, equals) {
-    EXPECT_EQ( (uint256_t(0xdeadbeefULL) == uint256_t(0xdeadbeefULL)), true);
-    EXPECT_EQ(!(uint256_t(0xdeadbeefULL) == uint256_t(0xfee1baadULL)), true);
+    EXPECT_EQ( (uint_t(0xdeadbeefULL) == uint_t(0xdeadbeefULL)), true);
+    EXPECT_EQ(!(uint_t(0xdeadbeefULL) == uint_t(0xfee1baadULL)), true);
 }
 
 TEST(External, equals) {
@@ -15,10 +15,10 @@ TEST(External, equals) {
     const uint32_t u32 = 0xaaaaaaaaULL;
     const uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-    EXPECT_EQ(t,   uint256_t(t));
-    EXPECT_EQ(f,   uint256_t(f));
-    EXPECT_EQ(u8,  uint256_t(u8));
-    EXPECT_EQ(u16, uint256_t(u16));
-    EXPECT_EQ(u32, uint256_t(u32));
-    EXPECT_EQ(u64, uint256_t(u64));
+    EXPECT_EQ(t,   uint_t(t));
+    EXPECT_EQ(f,   uint_t(f));
+    EXPECT_EQ(u8,  uint_t(u8));
+    EXPECT_EQ(u16, uint_t(u16));
+    EXPECT_EQ(u32, uint_t(u32));
+    EXPECT_EQ(u64, uint_t(u64));
 }

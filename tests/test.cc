@@ -1,6 +1,4 @@
 /*
-Simple test program for uint256_t
-
 The MIT License (MIT)
 
 Copyright (c) 2017 German Mendez Bravo (Kronuz) @ german dot mb at gmail.com

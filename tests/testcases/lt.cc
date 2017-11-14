@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "uint256_t.hh"
+#include "uint_t.hh"
 
 TEST(Comparison, less_than) {
-    const uint256_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
-    const uint256_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
+    const uint_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
+    const uint_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
 
     EXPECT_EQ(small < small, false);
     EXPECT_EQ(small < big,    true);
@@ -21,8 +21,8 @@ do                                                                      \
     const T small = std::numeric_limits <Z>::min();                     \
     const T big   = std::numeric_limits <Z>::max();                     \
                                                                         \
-    const uint256_t int_small(small);                                   \
-    const uint256_t int_big(big);                                       \
+    const uint_t int_small(small);                                      \
+    const uint_t int_big(big);                                          \
                                                                         \
     EXPECT_EQ(small > int_small, false);                                \
     EXPECT_EQ(small > int_big,   false);                                \
@@ -40,8 +40,8 @@ do                                                                      \
     const T small =  1;                                                 \
     const T big = std::numeric_limits <Z>::max();                       \
                                                                         \
-    const uint256_t int_small(small);                                   \
-    const uint256_t int_big(big);                                       \
+    const uint_t int_small(small);                                      \
+    const uint_t int_big(big);                                          \
                                                                         \
     EXPECT_EQ(small > int_small, false);                                \
     EXPECT_EQ(small > int_big,   false);                                \

@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
-#include "uint256_t.hh"
+#include "uint_t.hh"
 
 TEST(Arithmetic, increment) {
-    uint256_t value(0);
+    uint_t value(0);
     EXPECT_EQ(++value, 1);
     EXPECT_EQ(value++, 1);
     EXPECT_EQ(++value, 3);
 }
 
 TEST(Arithmetic, decrement) {
-    uint256_t value(0);
-    EXPECT_EQ(--value, uint256_t(0xffffffffffffffffULL, 0xffffffffffffffffULL));
-    EXPECT_EQ(value--, uint256_t(0xffffffffffffffffULL, 0xffffffffffffffffULL));
-    EXPECT_EQ(--value, uint256_t(0xffffffffffffffffULL, 0xfffffffffffffffdULL));
+    uint_t value(0);
+    EXPECT_EQ(--value, uint_t(0xffffffffffffffffULL));
+    EXPECT_EQ(value--, uint_t(0xffffffffffffffffULL));
+    EXPECT_EQ(--value, uint_t(0xfffffffffffffffdULL));
 }
