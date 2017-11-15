@@ -173,7 +173,7 @@ namespace std {  // This is probably not a good idea
 
 class uint_t {
 	private:
-		bool _cf;
+		uint64_t _carry;
 		std::vector<uint64_t> _value;
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -222,19 +222,19 @@ class uint_t {
 	public:
 		// Constructors
 		uint_t()
-			: _cf(false) { }
+			: _carry(0) { }
 
 		uint_t(const uint_t& num)
-			: _cf(false),
+			: _carry(0),
 			  _value(num._value) { }
 
 		uint_t(uint_t&& num)
-			: _cf(false),
+			: _carry(0),
 			  _value(std::move(num._value)) { }
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T & value)
-			: _cf(false) {
+			: _carry(0) {
 			if (value) {
 				_value.push_back(static_cast<uint64_t>(value));
 			}
@@ -242,14 +242,14 @@ class uint_t {
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T & value, Args... args)
-			: _cf(false) {
+			: _carry(0) {
 		    _uint_t(args...);
 			_value.push_back(static_cast<uint64_t>(value));
 			trim();
 		}
 
 		explicit uint_t(const char* bytes, size_t size, size_t base)
-			: _cf(false) {
+			: _carry(0) {
 			if (base >= 2 && base <= 36) {
 				for (; size; --size, ++bytes) {
 					uint8_t d = std::tolower(*bytes);
@@ -582,9 +582,7 @@ class uint_t {
 			for (; it != it_e && carry; ++it) {
 				carry = subborrow(*it, 0, carry, &*it);
 			}
-			if (carry) {
-				_cf = true;
-			}
+			_carry = carry;
 			trim();
 			return *this;
 		}
