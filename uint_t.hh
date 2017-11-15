@@ -31,7 +31,8 @@ a bug in operator*.
 Thanks to François Dessenne for convincing me
 to do a general rewrite of this class.
 
-Converted to header-only and extended by German Mendez Bravo (Kronuz)
+Germán Mández Bravo (Kronuz) converted Jason Lee's uint128_t
+to header-only and extended to arbitrary bit length.
 */
 
 #ifndef __uint_t__
