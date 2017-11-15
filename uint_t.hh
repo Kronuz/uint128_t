@@ -173,7 +173,7 @@ namespace std {  // This is probably not a good idea
 
 class uint_t {
 	private:
-		uint64_t _carry;
+		bool _carry;
 		std::vector<uint64_t> _value;
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -222,19 +222,19 @@ class uint_t {
 	public:
 		// Constructors
 		uint_t()
-			: _carry(0) { }
+			: _carry(false) { }
 
-		uint_t(const uint_t& num)
-			: _carry(0),
-			  _value(num._value) { }
+		uint_t(const uint_t& o)
+			: _carry(o._carry),
+			  _value(o._value) { }
 
-		uint_t(uint_t&& num)
-			: _carry(0),
-			  _value(std::move(num._value)) { }
+		uint_t(uint_t&& o)
+			: _carry(std::move(o._carry)),
+			  _value(std::move(o._value)) { }
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T & value)
-			: _carry(0) {
+			: _carry(false) {
 			if (value) {
 				_value.push_back(static_cast<uint64_t>(value));
 			}
@@ -242,14 +242,14 @@ class uint_t {
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T & value, Args... args)
-			: _carry(0) {
+			: _carry(false) {
 		    _uint_t(args...);
 			_value.push_back(static_cast<uint64_t>(value));
 			trim();
 		}
 
 		explicit uint_t(const char* bytes, size_t size, size_t base)
-			: _carry(0) {
+			: _carry(false) {
 			if (base >= 2 && base <= 36) {
 				for (; size; --size, ++bytes) {
 					uint8_t d = std::tolower(*bytes);
@@ -293,12 +293,14 @@ class uint_t {
 		//  RHS input args only
 
 		// Assignment Operator
-		uint_t& operator=(const uint_t& rhs) {
-			_value = rhs._value;
+		uint_t& operator=(const uint_t& o) {
+			_carry = o._carry;
+			_value = o._value;
 			return *this;
 		}
-		uint_t& operator=(uint_t&& rhs) {
-			_value = std::move(rhs._value);
+		uint_t& operator=(uint_t&& o) {
+			_carry = std::move(o._carry);
+			_value = std::move(o._value);
 			return *this;
 		}
 
@@ -552,6 +554,7 @@ class uint_t {
 			if (carry) {
 				_value.push_back(1);
 			}
+			_carry = false;
 			trim();
 			return *this;
 		}
