@@ -981,6 +981,16 @@ class uint_t {
 				throw std::invalid_argument("Base must be in the range [2, 36]");
 			}
 		}
+
+		template <typename Result = std::string>
+		Result hex() const {
+			return str<Result>(16);
+		}
+
+		template <typename Result = std::string>
+		Result bin() const {
+			return str<Result>(256);
+		}
 };
 
 namespace std {  // This is probably not a good idea
