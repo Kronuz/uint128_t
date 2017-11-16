@@ -705,7 +705,7 @@ class uint_t {
 		// Based on the convolution theorem which states that the Fourier
 		// transform of a convolution is the pointwise product of their
 		// Fourier transforms.
-		static uint_t fft_mul(const uint_t & lhs, const uint_t & rhs) {
+		static uint_t fft_mult(const uint_t & lhs, const uint_t & rhs) {
 			// Convert each integer to input wanted by fft()
 			size_t size = 1;
 			while (size < lhs._value.size() * 2) {
@@ -766,7 +766,7 @@ class uint_t {
 		}
 
 		// Long multiplication
-		static uint_t long_mul(const uint_t & lhs, const uint_t & rhs) {
+		static uint_t long_mult(const uint_t & lhs, const uint_t & rhs) {
 			auto lhs_it = lhs._value.begin();
 			auto lhs_it_e = lhs._value.end();
 
@@ -793,7 +793,7 @@ class uint_t {
 			return result;
 		}
 
-		static uint_t mul(const uint_t& lhs, const uint_t& rhs) {
+		static uint_t mult(const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!lhs || !rhs) {
 				return uint_0();
@@ -803,12 +803,12 @@ class uint_t {
 				return lhs;
 			}
 
-			// return fft_mul(lhs, rhs);
-			return long_mul(lhs, rhs);
+			// return fft_mult(lhs, rhs);
+			return long_mult(lhs, rhs);
 		}
 
 		uint_t operator*(const uint_t& rhs) const {
-			return mul(*this, rhs);
+			return mult(*this, rhs);
 		}
 
 		uint_t& operator*=(const uint_t& rhs) {
