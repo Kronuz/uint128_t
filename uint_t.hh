@@ -210,14 +210,16 @@ class uint_t {
 		}
 
 		int compare(const uint_t& rhs) const {
-			if (_value.size() > rhs._value.size()) return 1;
-			if (_value.size() < rhs._value.size()) return -1;
+			const auto& a = _value.size();
+			const auto& b = rhs._value.size();
+			if (a > b) return 1;
+			if (a < b) return -1;
 			auto rit = _value.rbegin();
 			auto rit_e = _value.rend();
 			auto rhs_rit = rhs._value.rbegin();
 			for (; rit != rit_e; ++rit, ++rhs_rit) {
-				auto& a = *rit;
-				auto& b = *rhs_rit;
+				const auto& a = *rit;
+				const auto& b = *rhs_rit;
 				if (a > b) return 1;
 				if (a < b) return -1;
 			}
