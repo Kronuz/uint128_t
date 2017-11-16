@@ -1,3 +1,6 @@
+#include <random>
+#include <algorithm>
+
 #include <gtest/gtest.h>
 
 #include "uint_t.hh"
@@ -68,4 +71,12 @@ TEST(Constructor, string) {
 	EXPECT_EQ(uint_t(uuid1, 256).str(), "287473478535710989927820548052301802926");
 	const char uuid2[] = "\330\105\140\310\23\117\21\346\241\342\64\66\73\322\155\256";
 	EXPECT_EQ(uint_t(uuid2, 256).str(), "287473478535710989927820548052301802926");
+}
+
+TEST(Constructor, big) {
+	std::random_device engine;
+	std::vector<char> data(1000000);
+	std::generate(begin(data), end(data), std::ref(engine));
+
+	EXPECT_EQ(uint_t(data, 256).str<std::vector<char>>(256), data);
 }
