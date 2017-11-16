@@ -38,7 +38,6 @@ to header-only and extended to arbitrary bit length.
 #ifndef __uint_t__
 #define __uint_t__
 
-#include <cmath>
 #include <vector>
 #include <string>
 #include <utility>
@@ -48,10 +47,6 @@ to header-only and extended to arbitrary bit length.
 #include <algorithm>
 #include <stdexcept>
 #include <type_traits>
-
-#ifndef M_PI
-#define M_PI 3.14159265359
-#endif
 
 // Compatibility inlines
 #ifndef __has_builtin         // Optional of course
@@ -259,67 +254,6 @@ class uint_t {
 		static const char& chr(int ord) {
 			static const char _[256] = "0123456789abcdefghijklmnopqrstuvwxyz";
 			return _[ord];
-		}
-
-		// Private FFT helper function
-		static int fft(std::vector<double> & data, bool dir) {
-			// Verify size is a power of two
-			size_t n = data.size() / 2;
-			if ((n == 0) || (n & (n - 1))) return 1;
-
-			// rearrange data for signal flow chart
-			size_t bitr_j = 1;
-			for (size_t i = 3; i < 2 * n - 1; i += 2) {
-				size_t msz = n;
-				while (bitr_j >= msz) {
-					bitr_j -= msz;
-					msz >>= 1;
-				}
-				bitr_j += msz;
-
-				if (bitr_j > i) {
-					double swap = data[bitr_j-1];
-					data[bitr_j-1] = data[i-1];
-					data[i-1] = swap;
-					swap = data[bitr_j];
-					data[bitr_j] = data[i];
-					data[i] = swap;
-				}
-			}
-
-			// Perform "butterfly" calculations
-			size_t lmax = 2;
-			while (lmax <= n) {
-				double wr = 1;
-				double wi = 0;
-
-				double theta = (2 * M_PI) / static_cast<double>(lmax * (dir ? 1.0 : -1.0));
-				double wpr = std::cos(theta);
-				double wpi = std::sin(theta);
-
-				int pstep = 2 * lmax;
-				for (size_t l = 1; l < lmax; l += 2) {
-					for (size_t p = l; p < 2 * n; p += pstep) {
-							size_t q = p + lmax;
-							double tempr = wr * data[q - 1] - wi * data[q];
-							double tempi = wr * data[q] + wi * data[q - 1];
-							data[q - 1] = data[p - 1] - tempr;
-							data[q] = data[p] - tempi;
-							data[p - 1] = data[p - 1] + tempr;
-							data[p] = data[p] + tempi;
-					}
-
-					// Find the next power of W
-					double wtemp = wr;
-					wr = wr * wpr - wi * wpi;
-					wi = wi * wpr + wtemp * wpi;
-				}
-
-				lmax = pstep;
-			}
-
-			// All is good
-			return 0;
 		}
 
 	public:
@@ -701,70 +635,6 @@ class uint_t {
 			return *this;
 		}
 
-		// FFT-based multiplication (STILL NOT WORKING!)
-		// Based on the convolution theorem which states that the Fourier
-		// transform of a convolution is the pointwise product of their
-		// Fourier transforms.
-		static uint_t fft_mult(const uint_t & lhs, const uint_t & rhs) {
-			// Convert each integer to input wanted by fft()
-			size_t size = 1;
-			while (size < lhs._value.size() * 2) {
-				size <<= 1;
-			}
-			while (size < rhs._value.size() * 2) {
-				size <<= 1;
-			}
-
-			std::vector<double> lhs_fft;
-			lhs_fft.resize(size * 2, 0);
-			for (size_t i = 0; i < lhs._value.size(); ++i) {
-				lhs_fft[i*2] = static_cast<double>(lhs._value[lhs._value.size() - 1 - i]);
-			}
-
-			std::vector<double> rhs_fft;
-			rhs_fft.resize(size * 2, 0);
-			for (size_t i = 0; i < rhs._value.size(); ++i) {
-				rhs_fft[i*2] = static_cast<double>(rhs._value[rhs._value.size() - 1 - i]);
-			}
-
-			// Compute the FFT of each
-			fft(lhs_fft, true);
-			fft(rhs_fft, true);
-
-			// Perform pointwise multiplication (numbers are complex)
-			std::vector<double> out_fft(2 * size);
-			for (size_t i = 0; i < 2 * size; i+=2) {
-				out_fft[i] = lhs_fft[i] * rhs_fft[i] - lhs_fft[i + 1] * rhs_fft[i + 1];
-				out_fft[i + 1] = lhs_fft[i] * rhs_fft[i + 1] + lhs_fft[i + 1] * rhs_fft[i];
-			}
-
-			// Compute the inverse FFT of this number
-			// remember to properly scale afterwards!
-			fft(out_fft, false);
-			for (size_t i = 0; i < 2 * size; i++) {
-				out_fft[i] /= size;
-			}
-
-			// Convert back to integer, carrying along the way
-			double carry = 0;
-			uint_t result;
-			for (size_t i = 0; i < 2 * size; i+=2) {
-				double current = out_fft[i]+carry;
-				if (current > static_cast<double>(static_cast<uint64_t>(-1ULL))) {
-					carry = current / (static_cast<double>(static_cast<uint64_t>(-1ULL)) + 1);
-					carry = static_cast<double>(std::floor(carry + 0.0001));
-					current = current - (carry * (static_cast<double>(static_cast<uint64_t>(-1ULL)) + 1));
-				} else {
-					carry = 0;
-				}
-				result._value.push_back(current + 0.0001);
-			}
-
-			// Finish up
-			result.trim();
-			return result;
-		}
-
 		// Long multiplication
 		static uint_t long_mult(const uint_t & a, const uint_t & b) {
 			if (a._value.size() < b._value.size()) {
@@ -818,7 +688,6 @@ class uint_t {
 				return lhs;
 			}
 
-			// return fft_mult(lhs, rhs);
 			return long_mult(lhs, rhs);
 		}
 
