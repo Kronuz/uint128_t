@@ -696,6 +696,7 @@ class uint_t {
 				carry = subborrow(*it, 0, carry, &*it);
 			}
 			_carry = carry;
+
 			trim();
 			return *this;
 		}
@@ -760,6 +761,7 @@ class uint_t {
 			}
 
 			// Finish up
+			result.trim();
 			return result;
 		}
 
@@ -786,6 +788,7 @@ class uint_t {
 				result += row;
 			}
 
+			// Finish up
 			result.trim();
 			return result;
 		}
