@@ -308,9 +308,17 @@ class uint_t {
 					}
 				}
 			} else if (size && base == 256) {
-				_value.resize((size + sizeof(uint64_t) - 1) / sizeof(uint64_t)); // grow (no initialization)
-				*_value.rbegin() = 0; // initialize last value
-				std::reverse_copy(bytes, bytes + size, reinterpret_cast<char*>(_value.data()));
+				auto value_size = size / sizeof(uint64_t);
+				auto value_padding = size % sizeof(uint64_t);
+				if (value_padding) {
+					value_padding = sizeof(uint64_t) - value_padding;
+					++value_size;
+				}
+				_value.resize(value_size); // grow (no initialization)
+				_value[0] = 0; // initialize value
+				auto ptr = reinterpret_cast<char*>(_value.data());
+				std::copy(bytes, bytes + size, ptr + value_padding);
+				std::reverse(ptr, ptr + value_size * sizeof(uint64_t));
 			} else {
 				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
 			}
