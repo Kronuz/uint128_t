@@ -823,6 +823,16 @@ class uint_t {
 			return uint_1;
 		}
 
+		// Naive Division: keep subtracting until lhs == 0
+		static std::pair<uint_t, uint_t> naive_divmod(const uint_t & lhs, const uint_t & rhs) {
+			std::pair<uint_t, uint_t> qr (uint_0(), lhs);
+			while (qr.second >= rhs) {
+				qr.second -= rhs;
+				++qr.first;
+			}
+			return qr;
+		}
+
 		// Long division
 		static std::pair<uint_t, uint_t> long_divmod(const uint_t & lhs, const uint_t & rhs) {
 			std::pair<uint_t, uint_t> qr(uint_0(), uint_0());
@@ -855,6 +865,7 @@ class uint_t {
 				return std::make_pair(uint_0(), lhs);
 			}
 
+			// return naive_divmod(lhs, rhs);
 			return long_divmod(lhs, rhs);
 		}
 
