@@ -810,9 +810,11 @@ class uint_t {
 			// First try saving some calculations:
 			if (!lhs || !rhs) {
 				return uint_0();
-			} else if (lhs == uint_1()) {
+			}
+			if (lhs == uint_1()) {
 				return rhs;
-			} else if (rhs == uint_1()) {
+			}
+			if (rhs == uint_1()) {
 				return lhs;
 			}
 
@@ -841,49 +843,58 @@ class uint_t {
 
 		// Naive Division: keep subtracting until lhs == 0
 		static std::pair<uint_t, uint_t> naive_divmod(const uint_t & lhs, const uint_t & rhs) {
-			std::pair<uint_t, uint_t> qr (uint_0(), lhs);
-			while (qr.second >= rhs) {
-				qr.second -= rhs;
-				++qr.first;
+			auto q = uint_0();
+			auto r = lhs;
+
+			while (r >= rhs) {
+				r -= rhs;
+				++q;
 			}
-			return qr;
+
+			return std::make_pair(q, r);
 		}
 
 		// Long division
 		static std::pair<uint_t, uint_t> long_divmod(const uint_t & lhs, const uint_t & rhs) {
-			std::pair<uint_t, uint_t> qr(uint_0(), uint_0());
+			auto q = uint_0();
+			auto r = uint_0();
+
 			for (size_t x = lhs.bits(); x; --x) {
-				qr.first  <<= uint_1();
-				qr.second <<= uint_1();
+				q <<= uint_1();
+				r <<= uint_1();
 
 				if (lhs[x - 1]) {
-					++qr.second;
+					++r;
 				}
 
-				if (qr.second >= rhs) {
-					qr.second -= rhs;
-					++qr.first;
+				if (r >= rhs) {
+					r -= rhs;
+					++q;
 				}
 			}
 
-			return qr;
+			return std::make_pair(q, r);
 		}
 
 		static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!rhs) {
 				throw std::domain_error("Error: division or modulus by 0");
-			} else if (rhs == uint_1()) {
-				return std::make_pair(lhs, uint_0());
-			} else if (lhs == rhs) {
-				return std::make_pair(uint_1(), uint_0());
-			} else if (!lhs || lhs < rhs) {
-				return std::make_pair(uint_0(), lhs);
-			} else if (lhs._value.size() - rhs._value.size() == 0) {
+			}
+			if (lhs._value.size() - rhs._value.size() == 0) {
 				// Fast division and modulo for single value
 				const auto& a = lhs._value[0];
 				const auto& b = rhs._value[0];
 				return std::make_pair(a / b, a % b);
+			}
+			if (rhs == uint_1()) {
+				return std::make_pair(lhs, uint_0());
+			}
+			if (lhs == rhs) {
+				return std::make_pair(uint_1(), uint_0());
+			}
+			if (!lhs || lhs < rhs) {
+				return std::make_pair(uint_0(), lhs);
 			}
 
 			// return naive_divmod(lhs, rhs);
