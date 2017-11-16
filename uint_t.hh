@@ -203,10 +203,8 @@ class uint_t {
 			}
 
 			// Removes all unused zeros from the internal vector
-			for (; rit != rit_e; ++rit) {
-				if (*rit) break;
-			}
-			_value.resize(rit_e - rit); // shrink
+			auto rit_f = std::find_if(rit, rit_e, [](const uint64_t& c) { return c; });
+			_value.resize(rit_e - rit_f); // shrink
 		}
 
 		int compare(const uint_t& rhs) const {
@@ -975,8 +973,8 @@ class uint_t {
 			} else if (base == 256) {
 				auto ptr = reinterpret_cast<const char*>(_value.data());
 				Result result(ptr, ptr + _value.size() * sizeof(uint64_t));
-				auto found = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c; });
-				result.resize(result.rend() - found); // shrink
+				auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c; });
+				result.resize(result.rend() - rit_f); // shrink
 				std::reverse(result.begin(), result.end());
 				return result;
 			} else {
