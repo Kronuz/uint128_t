@@ -592,7 +592,7 @@ class uint_t {
 			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
 				carry = addcarry(*it, *rhs_it, carry, &*it);
 			}
-			for (; it != it_e && carry; ++it) {
+			for (; carry && it != it_e; ++it) {
 				carry = addcarry(*it, 0, carry, &*it);
 			}
 			if (carry) {
@@ -626,7 +626,7 @@ class uint_t {
 			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
 				carry = subborrow(*it, *rhs_it, carry, &*it);
 			}
-			for (; it != it_e && carry; ++it) {
+			for (; carry && it != it_e; ++it) {
 				carry = subborrow(*it, 0, carry, &*it);
 			}
 			_carry = carry;
@@ -662,7 +662,9 @@ class uint_t {
 					for (; _it_rhs != it_rhs_e; ++_it_rhs, ++_it_result) {
 						carry = multadd(*_it_rhs, lhs_it_val, *_it_result, carry, &*_it_result);
 					}
-					*_it_result++ = carry;
+					if (carry) {
+						*_it_result++ = carry;
+					}
 					if (it_result_l < _it_result) {
 						it_result_l = _it_result;
 					}
