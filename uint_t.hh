@@ -879,6 +879,11 @@ class uint_t {
 				return std::make_pair(uint_1(), uint_0());
 			} else if (!lhs || lhs < rhs) {
 				return std::make_pair(uint_0(), lhs);
+			} else if (lhs._value.size() - rhs._value.size() == 0) {
+				// Fast division and modulo for single value
+				const auto& a = lhs._value[0];
+				const auto& b = rhs._value[0];
+				return std::make_pair(a / b, a % b);
 			}
 
 			// return naive_divmod(lhs, rhs);
