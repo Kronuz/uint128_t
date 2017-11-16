@@ -752,10 +752,17 @@ class uint_t {
 			return uint_0() - *this;
 		}
 
-		// Get private values
-		const uint64_t& operator[](size_t idx) const {
+		// Get private value at index
+		const uint64_t& value(size_t idx) const {
 			static const uint64_t zero = 0;
 			return idx < _value.size() ? _value[idx] : zero;
+		}
+
+		// Get value of bit N
+		bool operator[](size_t n) const {
+			auto nd = n / 64;
+			auto nm = n % 64;
+			return nd < _value.size() ? (_value[nd] >> nm) & 1 : 0;
 		}
 
 		// Get bitsize of value

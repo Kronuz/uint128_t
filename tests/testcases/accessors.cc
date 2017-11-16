@@ -14,6 +14,6 @@ TEST(Accessor, bits) {
 
 TEST(Accessor, data) {
 	const uint_t value(0xfedcba9876543210ULL, 0x0123456789abcdefULL);
-	EXPECT_EQ(value[1], 0xfedcba9876543210ULL);
-	EXPECT_EQ(value[0], 0x0123456789abcdefULL);
+	EXPECT_EQ(value.value(1), 0xfedcba9876543210ULL);
+	EXPECT_EQ(value.value(0), 0x0123456789abcdefULL);
 }

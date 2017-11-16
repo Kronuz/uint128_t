@@ -20,7 +20,7 @@ TEST(BitShift, left1) {
 		for (size_t i = 0; i < 64; ++i) {
 			auto bits = (j * 64 + i);
 			auto final = val << bits;
-			EXPECT_EQ(final[j], 1ULL << i);
+			EXPECT_EQ(final.value(j), 1ULL << i);
 			EXPECT_EQ(final.bits(), bits + 1);
 		}
 	}
@@ -44,7 +44,7 @@ TEST(BitShift, left2) {
 	for (size_t j = 0; j < 10; ++j) {
 		for (size_t i = 0; i < 64; ++i) {
 			auto bits = (j * 64 + i);
-			EXPECT_EQ(val[j], 1ULL << i);
+			EXPECT_EQ(val.value(j), 1ULL << i);
 			EXPECT_EQ(val.bits(), bits + 1);
 			val <<= 1;
 		}
