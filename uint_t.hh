@@ -766,27 +766,40 @@ class uint_t {
 		}
 
 		// Long multiplication
-		static uint_t long_mult(const uint_t & lhs, const uint_t & rhs) {
-			auto lhs_it = lhs._value.begin();
-			auto lhs_it_e = lhs._value.end();
-
-			size_t zeros = 0;
-			uint_t row, result = 0;
-			for (; lhs_it != lhs_it_e; ++lhs_it) {
-				row._value = std::vector<uint64_t>(zeros++, 0); // zeros on the right hand side
-				uint64_t carry = 0;
-				auto rhs_it = rhs._value.begin();
-				auto rhs_it_e = rhs._value.end();
-				for (; rhs_it != rhs_it_e; ++rhs_it) {
-					uint64_t prod;
-					carry = multadd(*lhs_it, *rhs_it, 0, carry, &prod);
-					row._value.push_back(prod);
-				}
-				if (carry) {
-					row._value.push_back(carry);
-				}
-				result += row;
+		static uint_t long_mult(const uint_t & a, const uint_t & b) {
+			if (a._value.size() < b._value.size()) {
+				return long_mult(b, a);
 			}
+
+			uint_t result;
+			result._value.resize(a._value.size() + b._value.size(), 0);
+
+			auto it_a = a._value.begin();
+			auto it_a_e = a._value.end();
+
+			auto it_b = b._value.begin();
+			auto it_b_e = b._value.end();
+
+			auto it_c = result._value.begin();
+			auto it_c_s = it_c;
+			auto it_c_l = it_c;
+
+			for (; it_b != it_b_e; ++it_b, ++it_c) {
+				if (auto b_it_val = *it_b) {
+					uint64_t carry = 0;
+					auto _it_a = it_a;
+					auto _it_c = it_c;
+					for (; _it_a != it_a_e; ++_it_a, ++_it_c) {
+						carry = multadd(*_it_a, b_it_val, *_it_c, carry, &*_it_c);
+					}
+					*_it_c++ = carry;
+					if (it_c_l < _it_c) {
+						it_c_l = _it_c;
+					}
+				}
+			}
+
+			result._value.resize(it_c_l - it_c_s); // shrink
 
 			// Finish up
 			result.trim();
