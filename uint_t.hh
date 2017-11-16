@@ -636,40 +636,40 @@ class uint_t {
 		}
 
 		// Long multiplication
-		static uint_t long_mult(const uint_t & a, const uint_t & b) {
-			if (a._value.size() < b._value.size()) {
-				return long_mult(b, a);
+		static uint_t long_mult(const uint_t & lhs, const uint_t & rhs) {
+			if (rhs._value.size() < lhs._value.size()) {
+				return long_mult(rhs, lhs);
 			}
 
 			uint_t result;
-			result._value.resize(a._value.size() + b._value.size(), 0);
+			result._value.resize(rhs._value.size() + lhs._value.size(), 0);
 
-			auto it_a = a._value.begin();
-			auto it_a_e = a._value.end();
+			auto it_rhs = rhs._value.begin();
+			auto it_rhs_e = rhs._value.end();
 
-			auto it_b = b._value.begin();
-			auto it_b_e = b._value.end();
+			auto it_lhs = lhs._value.begin();
+			auto it_lhs_e = lhs._value.end();
 
-			auto it_c = result._value.begin();
-			auto it_c_s = it_c;
-			auto it_c_l = it_c;
+			auto it_result = result._value.begin();
+			auto it_result_s = it_result;
+			auto it_result_l = it_result;
 
-			for (; it_b != it_b_e; ++it_b, ++it_c) {
-				if (auto b_it_val = *it_b) {
-					auto _it_a = it_a;
-					auto _it_c = it_c;
+			for (; it_lhs != it_lhs_e; ++it_lhs, ++it_result) { // << lhs should be the smaller
+				if (auto lhs_it_val = *it_lhs) {
+					auto _it_rhs = it_rhs;
+					auto _it_result = it_result;
 					uint64_t carry = 0;
-					for (; _it_a != it_a_e; ++_it_a, ++_it_c) {
-						carry = multadd(*_it_a, b_it_val, *_it_c, carry, &*_it_c);
+					for (; _it_rhs != it_rhs_e; ++_it_rhs, ++_it_result) {
+						carry = multadd(*_it_rhs, lhs_it_val, *_it_result, carry, &*_it_result);
 					}
-					*_it_c++ = carry;
-					if (it_c_l < _it_c) {
-						it_c_l = _it_c;
+					*_it_result++ = carry;
+					if (it_result_l < _it_result) {
+						it_result_l = _it_result;
 					}
 				}
 			}
 
-			result._value.resize(it_c_l - it_c_s); // shrink
+			result._value.resize(it_result_l - it_result_s); // shrink
 
 			// Finish up
 			result.trim();
