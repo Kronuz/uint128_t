@@ -656,9 +656,9 @@ class uint_t {
 
 			for (; it_b != it_b_e; ++it_b, ++it_c) {
 				if (auto b_it_val = *it_b) {
-					uint64_t carry = 0;
 					auto _it_a = it_a;
 					auto _it_c = it_c;
+					uint64_t carry = 0;
 					for (; _it_a != it_a_e; ++_it_a, ++_it_c) {
 						carry = multadd(*_it_a, b_it_val, *_it_c, carry, &*_it_c);
 					}
