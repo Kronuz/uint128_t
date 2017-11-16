@@ -94,13 +94,13 @@ inline uint64_t bits(uint64_t x) {
 #endif
 }
 
-inline uint64_t muladd(uint64_t x, uint64_t y, uint64_t c, uint64_t* result) {
+inline uint64_t multadd(uint64_t x, uint64_t y, uint64_t a, uint64_t c, uint64_t* result) {
 #if defined HAVE___UMUL128 && defined HAVE___ADDCARRY_U64
 	uint64_t h;
 	uint64_t l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
-	return h + _addcarry_u64(0, l, c, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
+	return h + _addcarry_u64(c, l, a, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
 #elif defined HAVE____INT64_T
-	auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(c);
+	auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(a) + static_cast<__uint128_t>(c);
 	*result = r;
 	return r >> 64;
 #else
@@ -109,8 +109,8 @@ inline uint64_t muladd(uint64_t x, uint64_t y, uint64_t c, uint64_t* result) {
 	uint64_t y0 = y & 0xffffffff;
 	uint64_t y1 = y >> 32;
 
-	uint64_t u = (x0 * y0) + (c & 0xffffffff);
-	uint64_t v = (x1 * y0) + (u >> 32) + (c >> 32);
+	uint64_t u = (x0 * y0) + (a & 0xffffffff) + (c & 0xffffffff);
+	uint64_t v = (x1 * y0) + (u >> 32) + (a >> 32) + (c >> 32);
 	uint64_t w = (x0 * y1) + (v & 0xffffffff);
 
 	*result = (w << 32) + (u & 0xffffffff); // low
@@ -781,7 +781,7 @@ class uint_t {
 				auto rhs_it_e = rhs._value.end();
 				for (; rhs_it != rhs_it_e; ++rhs_it) {
 					uint64_t prod;
-					carry = muladd(*lhs_it, *rhs_it, carry, &prod);
+					carry = multadd(*lhs_it, *rhs_it, 0, carry, &prod);
 					row._value.push_back(prod);
 				}
 				if (carry) {
