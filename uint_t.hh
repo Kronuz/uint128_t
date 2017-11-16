@@ -635,29 +635,21 @@ class uint_t {
 			return *this;
 		}
 
-		uint_t operator*(const uint_t& rhs) const {
-			// First try saving some calculations:
-			if (!*this || !rhs) {
-				return uint_0();
-			} else if (*this == uint_1()) {
-				return rhs;
-			} else if (rhs == uint_1()) {
-				return *this;
-			}
+		// Long multiplication
+		static uint_t long_mul(const uint_t & lhs, const uint_t & rhs) {
+			auto lhs_it = lhs._value.begin();
+			auto lhs_it_e = lhs._value.end();
 
-			// Long multiplication
-			uint_t row, result = 0;
-			auto it = _value.begin();
-			auto it_e = _value.end();
 			size_t zeros = 0;
-			for (; it != it_e; ++it) {
+			uint_t row, result = 0;
+			for (; lhs_it != lhs_it_e; ++lhs_it) {
 				row._value = std::vector<uint64_t>(zeros++, 0); // zeros on the right hand side
 				uint64_t carry = 0;
 				auto rhs_it = rhs._value.begin();
 				auto rhs_it_e = rhs._value.end();
 				for (; rhs_it != rhs_it_e; ++rhs_it) {
 					uint64_t prod;
-					carry = muladd(*it, *rhs_it, carry, &prod);
+					carry = muladd(*lhs_it, *rhs_it, carry, &prod);
 					row._value.push_back(prod);
 				}
 				if (carry) {
@@ -665,8 +657,26 @@ class uint_t {
 				}
 				result += row;
 			}
+
 			result.trim();
 			return result;
+		}
+
+		static uint_t mul(const uint_t& lhs, const uint_t& rhs) {
+			// First try saving some calculations:
+			if (!lhs || !rhs) {
+				return uint_0();
+			} else if (lhs == uint_1()) {
+				return rhs;
+			} else if (rhs == uint_1()) {
+				return lhs;
+			}
+
+			return long_mul(lhs, rhs);
+		}
+
+		uint_t operator*(const uint_t& rhs) const {
+			return mul(*this, rhs);
 		}
 
 		uint_t& operator*=(const uint_t& rhs) {
@@ -684,36 +694,43 @@ class uint_t {
 			return uint_1;
 		}
 
-		std::pair<uint_t, uint_t> divmod(const uint_t& rhs) const {
-			// First try saving some calculations:
-			if (!rhs) {
-				throw std::domain_error("Error: division or modulus by 0");
-			} else if (rhs == uint_1()) {
-				return std::make_pair(*this, uint_0());
-			} else if (*this == rhs) {
-				return std::make_pair(uint_1(), uint_0());
-			} else if (!*this || *this < rhs) {
-				return std::make_pair(uint_0(), *this);
-			}
-
-			// Long division
+		// Long division
+		static std::pair<uint_t, uint_t> long_divmod(const uint_t & lhs, const uint_t & rhs) {
 			std::pair<uint_t, uint_t> qr(uint_0(), uint_0());
-			for (size_t x = bits(); x > 0; --x) {
+			for (size_t x = lhs.bits(); x; --x) {
 				qr.first  <<= uint_1();
 				qr.second <<= uint_1();
-				if ((*this >> (x - 1U)) & 1) {
+
+				if (lhs[x - 1]) {
 					++qr.second;
 				}
+
 				if (qr.second >= rhs) {
 					qr.second -= rhs;
 					++qr.first;
 				}
 			}
+
 			return qr;
 		}
 
+		static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
+			// First try saving some calculations:
+			if (!rhs) {
+				throw std::domain_error("Error: division or modulus by 0");
+			} else if (rhs == uint_1()) {
+				return std::make_pair(lhs, uint_0());
+			} else if (lhs == rhs) {
+				return std::make_pair(uint_1(), uint_0());
+			} else if (!lhs || lhs < rhs) {
+				return std::make_pair(uint_0(), lhs);
+			}
+
+			return long_divmod(lhs, rhs);
+		}
+
 		uint_t operator/(const uint_t& rhs) const {
-			return divmod(rhs).first;
+			return divmod(*this, rhs).first;
 		}
 
 		uint_t& operator/=(const uint_t& rhs) {
@@ -722,7 +739,7 @@ class uint_t {
 		}
 
 		uint_t operator%(const uint_t& rhs) const {
-			return divmod(rhs).second;
+			return divmod(*this, rhs).second;
 		}
 
 		uint_t& operator%=(const uint_t& rhs) {
@@ -803,7 +820,7 @@ class uint_t {
 					} else {
 						std::pair<uint_t, uint_t> qr(*this, uint_0());
 						do {
-							qr = qr.first.divmod(base);
+							qr = divmod(qr.first, base);
 							result.push_back(chr(static_cast<int>(qr.second)));
 						} while (qr.first);
 					}
