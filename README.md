@@ -5,7 +5,7 @@
 An unsigned integer type for C++
 
 This is simple implementation of an unsigned integer type in C++.
-It's meant to be used like a standard uintX_t, except with a larger bit
+It's meant to be used like a standard uintN_t, except with a larger bit
 size than those provided by C/C++.
 
 Based upon Jason Lee's uint128_t module and modified by Kronuz to
