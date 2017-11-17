@@ -1,5 +1,6 @@
 #include <random>
 #include <algorithm>
+#include <functional>
 
 #include <gtest/gtest.h>
 
