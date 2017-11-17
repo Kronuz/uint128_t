@@ -38,6 +38,7 @@ to header-only and extended to arbitrary bit length.
 #ifndef __uint_t__
 #define __uint_t__
 
+#include <cassert>
 #include <vector>
 #include <string>
 #include <utility>
@@ -652,6 +653,7 @@ class uint_t {
 			if (rhs == 0) {
 				return *this;
 			}
+			assert(rhs.size() == 1);
 			auto shift = rhs.front();
 			auto shifts = shift / 64;
 			shift = shift % 64;
@@ -687,6 +689,7 @@ class uint_t {
 			} else if (rhs == 0) {
 				return *this;
 			}
+			assert(rhs.size() == 1);
 			auto shift = rhs.front();
 			auto shifts = shift / 64;
 			shift = shift % 64;
@@ -841,11 +844,11 @@ class uint_t {
 			uint_t result;
 			result.resize(rhs.size() + lhs.size(), 0);
 
-			auto it_rhs = rhs.begin();
-			auto it_rhs_e = rhs.end();
-
 			auto it_lhs = lhs.begin();
 			auto it_lhs_e = lhs.end();
+
+			auto it_rhs = rhs.begin();
+			auto it_rhs_e = rhs.end();
 
 			auto it_result = result.begin();
 			auto it_result_s = it_result;
@@ -1010,6 +1013,32 @@ class uint_t {
 			return std::make_pair(q, r);
 		}
 
+		// Single division (for single sized rhs)
+		static std::pair<uint_t, uint_t> single_divmod(const uint_t& lhs, const uint_t& rhs) {
+			assert(rhs.size() == 1);
+			auto n = rhs.front();
+
+			auto rit_lhs = lhs.rbegin();
+			auto rit_lhs_e = lhs.rend();
+
+			uint_t q;
+			q.resize(lhs.size(), 0);
+			auto rit_q = q.rbegin();
+
+			__uint128_t r = 0;
+
+			for (; rit_lhs != rit_lhs_e; ++rit_lhs, ++rit_q) {
+				r = (r << 64) | *rit_lhs;
+				auto hi = r / n;
+				r -= hi * n;
+				*rit_q = hi;
+			}
+
+			q.trim();
+
+			return std::make_pair(q, r);
+		}
+
 		static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!rhs) {
@@ -1029,6 +1058,9 @@ class uint_t {
 			}
 			if (!lhs || lhs < rhs) {
 				return std::make_pair(uint_0(), lhs);
+			}
+			if (rhs.size() == 1) {
+				return single_divmod(lhs, rhs);
 			}
 
 			// return naive_divmod(lhs, rhs);
