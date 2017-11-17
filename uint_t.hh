@@ -179,12 +179,12 @@ class uint_t {
 		std::vector<uint64_t> _value;
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-		void _uint_t(const T & value) {
+		void _uint_t(const T& value) {
 			_value.push_back(static_cast<uint64_t>(value));
 		}
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-		void _uint_t(const T & value, Args... args) {
+		void _uint_t(const T& value, Args... args) {
 			_uint_t(args...);
 			_value.push_back(static_cast<uint64_t>(value));
 		}
@@ -304,7 +304,7 @@ class uint_t {
 		}
 
 		// A helper for Karatsuba multiplication to split a number in two, at _value[n].
-		static std::pair<uint_t, uint_t> karatsuba_mult_split(const uint_t & num, size_t n) {
+		static std::pair<uint_t, uint_t> karatsuba_mult_split(const uint_t& num, size_t n) {
 			auto it = num._value.begin();
 			auto it_split = it + std::min(num._value.size(), n);
 			return std::make_pair(
@@ -317,7 +317,7 @@ class uint_t {
 		// Karatsuba would pay off *if* the inputs had balanced sizes.
 		// View rhs as a sequence of slices, each with lhs._value.size() digits,
 		// and multiply the slices by lhs, one at a time.
-		static uint_t karatsuba_lopsided_mult(const uint_t & lhs, const uint_t & rhs) {
+		static uint_t karatsuba_lopsided_mult(const uint_t& lhs, const uint_t& rhs) {
 			const auto& lhs_size = lhs._value.size();
 			auto rhs_size = rhs._value.size();
 
@@ -352,14 +352,14 @@ class uint_t {
 			: _carry(std::move(o._carry)),
 			  _value(std::move(o._value)) { }
 
-		uint_t(const std::vector<uint64_t> & value)
+		uint_t(const std::vector<uint64_t>& value)
 			: _carry(false),
 			  _value(value) {
 			trim();
 		}
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-		uint_t(const T & value)
+		uint_t(const T& value)
 			: _carry(false) {
 			if (value) {
 				_value.push_back(static_cast<uint64_t>(value));
@@ -367,7 +367,7 @@ class uint_t {
 		}
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-		uint_t(const T & value, Args... args)
+		uint_t(const T& value, Args... args)
 			: _carry(false) {
 			_uint_t(args...);
 			_value.push_back(static_cast<uint64_t>(value));
@@ -741,7 +741,7 @@ class uint_t {
 		}
 
 		// Long multiplication
-		static uint_t long_mult(const uint_t & lhs, const uint_t & rhs) {
+		static uint_t long_mult(const uint_t& lhs, const uint_t& rhs) {
 			const auto& lhs_size = lhs._value.size();
 			const auto& rhs_size = rhs._value.size();
 
@@ -788,7 +788,7 @@ class uint_t {
 		}
 
 		// Karatsuba multiplication
-		static uint_t karatsuba_mult(const uint_t & lhs, const uint_t & rhs) {
+		static uint_t karatsuba_mult(const uint_t& lhs, const uint_t& rhs) {
 			const auto& lhs_size = lhs._value.size();
 			const auto& rhs_size = rhs._value.size();
 
@@ -889,7 +889,7 @@ class uint_t {
 		}
 
 		// Naive Division: keep subtracting until lhs == 0
-		static std::pair<uint_t, uint_t> naive_divmod(const uint_t & lhs, const uint_t & rhs) {
+		static std::pair<uint_t, uint_t> naive_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = lhs;
 
@@ -902,7 +902,7 @@ class uint_t {
 		}
 
 		// Long division
-		static std::pair<uint_t, uint_t> long_divmod(const uint_t & lhs, const uint_t & rhs) {
+		static std::pair<uint_t, uint_t> long_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = uint_0();
 
@@ -1085,32 +1085,32 @@ namespace std {  // This is probably not a good idea
 
 // Bitwise Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator&(const T & lhs, const uint_t& rhs) {
+uint_t operator&(const T& lhs, const uint_t& rhs) {
 	return rhs & lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator&=(T & lhs, const uint_t& rhs) {
+T& operator&=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs & lhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator|(const T & lhs, const uint_t& rhs) {
+uint_t operator|(const T& lhs, const uint_t& rhs) {
 	return rhs | lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator|=(T & lhs, const uint_t& rhs) {
+T& operator|=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs | lhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator^(const T & lhs, const uint_t& rhs) {
+uint_t operator^(const T& lhs, const uint_t& rhs) {
 	return rhs ^ lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator^=(T & lhs, const uint_t& rhs) {
+T& operator^=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs ^ lhs);
 }
 
@@ -1144,7 +1144,7 @@ inline uint_t operator<<(const int64_t  & lhs, const uint_t& rhs) {
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator<<=(T & lhs, const uint_t& rhs) {
+T& operator<<=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(uint_t(lhs) << rhs);
 }
 
@@ -1177,94 +1177,94 @@ inline uint_t operator>>(const int64_t  & lhs, const uint_t& rhs) {
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator>>=(T & lhs, const uint_t& rhs) {
+T& operator>>=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(uint_t(lhs) >> rhs);
 }
 
 // Comparison Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator==(const T & lhs, const uint_t& rhs) {
+bool operator==(const T& lhs, const uint_t& rhs) {
 	return rhs == lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator!=(const T & lhs, const uint_t& rhs) {
+bool operator!=(const T& lhs, const uint_t& rhs) {
 	return rhs != lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator>(const T & lhs, const uint_t& rhs) {
+bool operator>(const T& lhs, const uint_t& rhs) {
 	return rhs < lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator<(const T & lhs, const uint_t& rhs) {
+bool operator<(const T& lhs, const uint_t& rhs) {
 	return rhs > lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator>=(const T & lhs, const uint_t& rhs) {
+bool operator>=(const T& lhs, const uint_t& rhs) {
 	return rhs <= lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-bool operator<=(const T & lhs, const uint_t& rhs) {
+bool operator<=(const T& lhs, const uint_t& rhs) {
 	return rhs >= lhs;
 }
 
 // Arithmetic Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator+(const T & lhs, const uint_t& rhs) {
+uint_t operator+(const T& lhs, const uint_t& rhs) {
 	return rhs + lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator+=(T & lhs, const uint_t& rhs) {
+T& operator+=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs + lhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator-(const T & lhs, const uint_t& rhs) {
+uint_t operator-(const T& lhs, const uint_t& rhs) {
 	return -(rhs - lhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator-=(T & lhs, const uint_t& rhs) {
+T& operator-=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(-(rhs - lhs));
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator*(const T & lhs, const uint_t& rhs) {
+uint_t operator*(const T& lhs, const uint_t& rhs) {
 	return rhs * lhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator*=(T & lhs, const uint_t& rhs) {
+T& operator*=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs * lhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator/(const T & lhs, const uint_t& rhs) {
+uint_t operator/(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) / rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator/=(T & lhs, const uint_t& rhs) {
+T& operator/=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(uint_t(lhs) / rhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-uint_t operator%(const T & lhs, const uint_t& rhs) {
+uint_t operator%(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) % rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
-T & operator%=(T & lhs, const uint_t& rhs) {
+T& operator%=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(uint_t(lhs) % rhs);
 }
 
 // IO Operator
-inline std::ostream& operator<<(std::ostream & stream, const uint_t& rhs) {
+inline std::ostream& operator<<(std::ostream& stream, const uint_t& rhs) {
 	if (stream.flags() & stream.oct) {
 		stream << rhs.str(8);
 	} else if (stream.flags() & stream.dec) {
