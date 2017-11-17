@@ -343,7 +343,7 @@ class uint_t {
 			return 0;
 		}
 
-		static const uint8_t& base_shift(int base) {
+		static const uint8_t& base_bits(int base) {
 			static const uint8_t _[256] = {
 				0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4,
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5,
@@ -1134,14 +1134,14 @@ class uint_t {
 			uint_t result;
 
 			if (base >= 2 && base <= 36) {
-				uint_t shift = base_shift(base);
-				if (shift) {
+				uint_t bits = base_bits(base);
+				if (bits) {
 					for (; sz; --sz, ++bytes) {
 						auto d = ord(static_cast<int>(*bytes));
 						if (d >= base) {
 							throw std::runtime_error("Error: Not a digit in base " + std::to_string(base) + ": '" + std::string(1, *bytes) + "'");
 						}
-						result = (result << shift) | d;
+						result = (result << bits) | d;
 					}
 				} else {
 					for (; sz; --sz, ++bytes) {
@@ -1176,18 +1176,31 @@ class uint_t {
 		Result str(int base = 10) const {
 			if (base >= 2 && base <= 36) {
 				Result result;
-				if (!*this) {
-					result.push_back('0');
-				} else {
-					uint64_t mask = base - 1;
-					uint_t shift = base_shift(base);
+				if (size()) {
+					auto bits = base_bits(base);
 					result.reserve(size() * base_size(base));
-					if (shift) {
-						auto num = *this;
-						do {
+					if (bits) {
+						uint64_t mask = base - 1;
+						auto shift = 0;
+						auto ptr = reinterpret_cast<const uint32_t*>(data());
+						uint64_t num = *ptr++;
+						num <<= 32;
+						for (auto i = size() * 2 - 1; i; --i) {
+							num >>= 32;
+							num |= (static_cast<uint64_t>(*ptr++) << 32);
+							do {
+								result.push_back(chr(static_cast<int>((num >> shift) & mask)));
+								shift += bits;
+							} while (shift <= 32);
+							shift -= 32;
+						}
+						num >>= (shift + 32);
+						while (num) {
 							result.push_back(chr(static_cast<int>(num & mask)));
-							num >>= shift;
-						} while (num);
+							num >>= bits;
+						}
+						auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c != '0'; });
+						result.resize(result.rend() - rit_f); // shrink
 					} else {
 						std::pair<uint_t, uint_t> qr(*this, uint_0());
 						do {
@@ -1195,19 +1208,37 @@ class uint_t {
 							result.push_back(chr(static_cast<int>(qr.second)));
 						} while (qr.first);
 					}
+					std::reverse(result.begin(), result.end());
+				} else {
+					result.push_back('0');
 				}
-				std::reverse(result.begin(), result.end());
 				return result;
 			} else if (base == 256) {
-				auto ptr = reinterpret_cast<const char*>(data());
-				Result result(ptr, ptr + size() * sizeof(uint64_t));
-				auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c; });
-				result.resize(result.rend() - rit_f); // shrink
-				std::reverse(result.begin(), result.end());
-				return result;
+				if (size()) {
+					auto ptr = reinterpret_cast<const char*>(data());
+					Result result(ptr, ptr + size() * sizeof(uint64_t));
+					auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c; });
+					result.resize(result.rend() - rit_f); // shrink
+					std::reverse(result.begin(), result.end());
+					return result;
+				} else {
+					Result result;
+					result.push_back('\x00');
+					return result;
+				}
 			} else {
 				throw std::invalid_argument("Base must be in the range [2, 36]");
 			}
+		}
+
+		template <typename Result = std::string>
+		Result bin() const {
+			return str<Result>(2);
+		}
+
+		template <typename Result = std::string>
+		Result oct() const {
+			return str<Result>(8);
 		}
 
 		template <typename Result = std::string>
@@ -1216,7 +1247,7 @@ class uint_t {
 		}
 
 		template <typename Result = std::string>
-		Result bin() const {
+		Result raw() const {
 			return str<Result>(256);
 		}
 };
