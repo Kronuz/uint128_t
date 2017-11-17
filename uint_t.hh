@@ -48,6 +48,8 @@ to header-only and extended to arbitrary bit length.
 #include <stdexcept>
 #include <type_traits>
 
+#define KARATSUBA_CUTOFF 70
+
 // Compatibility inlines
 #ifndef __has_builtin         // Optional of course
 #define __has_builtin(x) 0    // Compatibility with non-clang compilers
@@ -256,6 +258,42 @@ class uint_t {
 			return _[ord];
 		}
 
+		// A helper for Karatsuba multiplication to split a number in two, at _value[n].
+		static std::pair<uint_t, uint_t> karatsuba_mult_split(const uint_t & num, size_t n) {
+			auto it = num._value.begin();
+			auto it_split = it + std::min(num._value.size(), n);
+			return std::make_pair(
+				uint_t(std::vector<uint64_t>(it, it_split)),
+				uint_t(std::vector<uint64_t>(it_split, num._value.end()))
+			);
+		}
+
+		// If rhs has at least twice the digits of lhs, and lhs is big enough that
+		// Karatsuba would pay off *if* the inputs had balanced sizes.
+		// View rhs as a sequence of slices, each with lhs._value.size() digits,
+		// and multiply the slices by lhs, one at a time.
+		static uint_t karatsuba_lopsided_mult(const uint_t & lhs, const uint_t & rhs) {
+			const auto& lhs_size = lhs._value.size();
+			auto rhs_size = rhs._value.size();
+
+			uint_t result;
+			auto rhs_it = rhs._value.begin();
+			size_t shift = 0;
+
+			while (rhs_size > 0) {
+				// Multiply the next slice of rhs by lhs and add into result:
+				auto slice_size = std::min(lhs_size, rhs_size);
+				auto rhs_slice = uint_t(std::vector<uint64_t>(rhs_it, rhs_it + slice_size));
+				auto product = karatsuba_mult(lhs, rhs_slice);
+				result.add(product, shift);
+				shift += slice_size;
+				rhs_size -= slice_size;
+				rhs_it += slice_size;
+			}
+
+			return result;
+		}
+
 	public:
 		// Constructors
 		uint_t()
@@ -268,6 +306,12 @@ class uint_t {
 		uint_t(uint_t&& o)
 			: _carry(std::move(o._carry)),
 			  _value(std::move(o._value)) { }
+
+		uint_t(const std::vector<uint64_t> & value)
+			: _carry(false),
+			  _value(value) {
+			trim();
+		}
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T & value)
@@ -575,16 +619,20 @@ class uint_t {
 			return result;
 		}
 
-		uint_t& operator+=(const uint_t& rhs) {
+		uint_t& add(const uint_t& rhs, size_t shift=0) {
 			// First try saving some calculations:
 			if (!rhs) {
 				return *this;
 			}
-
-			if (_value.size() < rhs._value.size()) {
-				_value.resize(rhs._value.size(), 0); // grow
+			const auto& size = _value.size();
+			const auto& rhs_size = rhs._value.size();
+			if (shift) {
+				shift = std::min(shift, size);
 			}
-			auto it = _value.begin();
+			if (size < rhs_size + shift) {
+				_value.resize(rhs_size + shift, 0); // grow
+			}
+			auto it = _value.begin() + shift;
 			auto it_e = _value.end();
 			auto rhs_it = rhs._value.begin();
 			auto rhs_it_e = rhs._value.end();
@@ -603,22 +651,30 @@ class uint_t {
 			return *this;
 		}
 
+		uint_t& operator+=(const uint_t& rhs) {
+			return add(rhs, 0);
+		}
+
 		uint_t operator-(const uint_t& rhs) const {
 			uint_t result(*this);
 			result -= rhs;
 			return result;
 		}
 
-		uint_t& operator-=(const uint_t& rhs) {
+		uint_t& sub(const uint_t& rhs, size_t shift=0) {
 			// First try saving some calculations:
 			if (!rhs) {
 				return *this;
 			}
-
-			if (_value.size() < rhs._value.size()) {
-				_value.resize(rhs._value.size(), 0); // grow
+			const auto& size = _value.size();
+			const auto& rhs_size = rhs._value.size();
+			if (shift) {
+				shift = std::min(shift, size);
 			}
-			auto it = _value.begin();
+			if (size < rhs_size + shift) {
+				_value.resize(rhs_size + shift, 0); // grow
+			}
+			auto it = _value.begin() + shift;
 			auto it_e = _value.end();
 			auto rhs_it = rhs._value.begin();
 			auto rhs_it_e = rhs._value.end();
@@ -635,9 +691,17 @@ class uint_t {
 			return *this;
 		}
 
+		uint_t& operator-=(const uint_t& rhs) {
+			return sub(rhs, 0);
+		}
+
 		// Long multiplication
 		static uint_t long_mult(const uint_t & lhs, const uint_t & rhs) {
-			if (rhs._value.size() < lhs._value.size()) {
+			const auto& lhs_size = lhs._value.size();
+			const auto& rhs_size = rhs._value.size();
+
+			if (lhs_size > rhs_size) {
+				// rhs should be the largest:
 				return long_mult(rhs, lhs);
 			}
 
@@ -654,7 +718,7 @@ class uint_t {
 			auto it_result_s = it_result;
 			auto it_result_l = it_result;
 
-			for (; it_lhs != it_lhs_e; ++it_lhs, ++it_result) { // << lhs should be the smaller
+			for (; it_lhs != it_lhs_e; ++it_lhs, ++it_result) {
 				if (auto lhs_it_val = *it_lhs) {
 					auto _it_rhs = it_rhs;
 					auto _it_result = it_result;
@@ -678,6 +742,72 @@ class uint_t {
 			return result;
 		}
 
+		// Karatsuba multiplication
+		static uint_t karatsuba_mult(const uint_t & lhs, const uint_t & rhs) {
+			const auto& lhs_size = lhs._value.size();
+			const auto& rhs_size = rhs._value.size();
+
+			if (lhs_size > rhs_size) {
+				// rhs should be the largest:
+				return karatsuba_mult(rhs, lhs);
+			}
+
+			static constexpr size_t karatsuba_cutoff = KARATSUBA_CUTOFF;
+			if (lhs_size <= karatsuba_cutoff) {
+				return long_mult(lhs, rhs);
+			}
+
+			// If a is too small compared to b, splitting on b gives a degenerate case
+			// in which Karatsuba may be (even much) less efficient than long multiplication.
+			if (2 * lhs_size <= rhs_size) {
+				return karatsuba_lopsided_mult(lhs, rhs);
+			}
+
+			// Karatsuba:
+			//
+			//                  A      B
+			//               x  C      D
+			//     ---------------------
+			//                 AD     BD
+			//       AC        BC
+			//     ---------------------
+			//       AC    AD + BC    BD
+			//
+			//  AD + BC  =
+			//  AC + AD + BC + BD - AC - BD
+			//  (A + B) (C + D) - AC - BD
+
+			// Calculate the split point near the middle of the largest (rhs).
+			auto shift = rhs_size >> 1;
+
+			// Split to get A and B:
+			auto lhs_pair = karatsuba_mult_split(lhs, shift);
+			auto& A = lhs_pair.second; // hi
+			auto& B = lhs_pair.first;  // lo
+
+			// Split to get C and D:
+			auto rhs_pair = karatsuba_mult_split(rhs, shift);
+			auto& C = rhs_pair.second; // hi
+			auto& D = rhs_pair.first;  // lo
+
+			// Get the pieces:
+			auto AC = karatsuba_mult(A, C);
+			auto BD = karatsuba_mult(B, D);
+			auto AD_BC = karatsuba_mult((A + B), (C + D)) - AC - BD;
+
+			// Join the pieces, AC and BD (can't overlap) into BD:
+			BD._value.reserve(shift * 2 + AC._value.size());
+			BD._value.resize(shift * 2, 0);
+			BD._value.insert(BD._value.end(), AC._value.begin(), AC._value.end());
+
+			// And add AD_BC to the middle: (AC           BD) + (    AD + BC    ):
+			BD.add(AD_BC, shift);
+
+			// Finish up
+			BD.trim();
+			return BD;
+		}
+
 		static uint_t mult(const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!lhs || !rhs) {
@@ -690,7 +820,8 @@ class uint_t {
 				return lhs;
 			}
 
-			return long_mult(lhs, rhs);
+			// return long_mult(lhs, rhs);
+			return karatsuba_mult(lhs, rhs);
 		}
 
 		uint_t operator*(const uint_t& rhs) const {
