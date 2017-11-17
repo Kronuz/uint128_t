@@ -40,7 +40,6 @@ to header-only and extended to arbitrary bit length.
 
 #include <vector>
 #include <string>
-#include <memory>
 #include <utility>
 #include <cstring>
 #include <cstdint>
@@ -90,109 +89,103 @@ class uint_t {
 		static constexpr size_t karatsuba_cutoff = 70;
 		static constexpr double growth_factor = 1.5;
 
-		size_t _begin;
-		size_t _end;
+		size_t _shifts;
 
-		std::shared_ptr<std::vector<uint64_t>> _value;
+		std::vector<uint64_t> _value;
 		bool _carry;
 
 		// vector window
 
 		size_t grow(size_t n) {
-			auto cc = _value->capacity();
+			auto cc = _value.capacity();
 			if (n >= cc) {
 				cc = n * growth_factor;
-				_value->reserve(cc);
+				_value.reserve(cc);
 			}
 			return cc;
 		}
 
 		void prepend(size_t sz, const uint64_t& val) {
-			auto min = std::min(_begin, sz);
+			auto min = std::min(_shifts, sz);
 			if (min) {
-				std::fill(_value->begin() + _begin - min, _value->begin() + _begin, val);
-				_begin -= min;
+				std::fill(_value.begin() + _shifts - min, _value.begin() + _shifts, val);
+				_shifts -= min;
 				sz -= min;
 			}
 			if (sz) {
-				// _begin should be 0 in here
-				auto csz = _value->size();
+				// _shifts should be 0 in here
+				auto csz = _value.size();
 				auto isz = grow(csz + sz) - csz;
-				_value->insert(_value->begin(), isz, val);
-				_begin = isz - sz;
+				_value.insert(_value.begin(), isz, val);
+				_shifts = isz - sz;
 			}
 		}
 
 		void append(const uint64_t& val) {
-			grow(_value->size() + 1);
-			_value->push_back(val);
-			_end = 0;
+			grow(_value.size() + 1);
+			_value.push_back(val);
 		}
 
 		void append(const uint_t& val) {
-			grow(_value->size() + val.end() - val.begin());
-			_value->insert(_value->end(), val.begin(), val.end());
-			_end = 0;
+			grow(_value.size() + val.end() - val.begin());
+			_value.insert(_value.end(), val.begin(), val.end());
 		}
 
 		void resize(size_t sz) {
-			_value->resize(sz + _begin);
-			_end = 0;
+			_value.resize(sz + _shifts);
 		}
 
 		void resize(size_t sz, const uint64_t& c) {
-			_value->resize(sz + _begin, c);
-			_end = 0;
+			_value.resize(sz + _shifts, c);
 		}
 
 		void clear() {
-			_value->clear();
-			_begin = 0;
-			_end = 0;
+			_value.clear();
+			_shifts = 0;
 		}
 
 		uint64_t* data() noexcept {
-			return _value->data() + _begin;
+			return _value.data() + _shifts;
 		}
 
 		const uint64_t* data() const noexcept {
-			return _value->data() + _begin;
+			return _value.data() + _shifts;
 		}
 
 		size_t size() const noexcept {
-			return _end ? _end - _begin : _value->size() - _begin;
+			return _value.size() - _shifts;
 		}
 
 		std::vector<uint64_t>::iterator begin() noexcept {
-			return _value->begin() + _begin;
+			return _value.begin() + _shifts;
 		}
 
 		std::vector<uint64_t>::const_iterator begin() const noexcept {
-			return _value->cbegin() + _begin;
+			return _value.cbegin() + _shifts;
 		}
 
 		std::vector<uint64_t>::iterator end() noexcept {
-			return _end ? _value->begin() + _end : _value->end();
+			return _value.end();
 		}
 
 		std::vector<uint64_t>::const_iterator end() const noexcept {
-			return _end ? _value->cbegin() + _end : _value->cend();
+			return _value.cend();
 		}
 
 		std::vector<uint64_t>::reverse_iterator rbegin() noexcept {
-			return _end ? std::vector<uint64_t>::reverse_iterator(_value->begin() + _end) : _value->rbegin();
+			return _value.rbegin();
 		}
 
 		std::vector<uint64_t>::const_reverse_iterator rbegin() const noexcept {
-			return _end ? std::vector<uint64_t>::const_reverse_iterator(_value->cbegin() + _end) : _value->crbegin();
+			return _value.crbegin();
 		}
 
 		std::vector<uint64_t>::reverse_iterator rend() noexcept {
-			return std::vector<uint64_t>::reverse_iterator(_value->begin() + _begin);
+			return std::vector<uint64_t>::reverse_iterator(_value.begin() + _shifts);
 		}
 
 		std::vector<uint64_t>::const_reverse_iterator rend() const noexcept {
-			return std::vector<uint64_t>::const_reverse_iterator(_value->cbegin() + _begin);
+			return std::vector<uint64_t>::const_reverse_iterator(_value.cbegin() + _shifts);
 		}
 
 		std::vector<uint64_t>::reference front() {
@@ -426,11 +419,12 @@ class uint_t {
 		}
 
 		// A helper for Karatsuba multiplication to split a number in two, at n.
-		static std::pair<const uint_t, const uint_t> karatsuba_mult_split(const uint_t& num, size_t n) {
-			auto split = std::min(num.size(), n);
+		static std::pair<uint_t, uint_t> karatsuba_mult_split(const uint_t& num, size_t n) {
+			auto it = num.begin();
+			auto it_split = it + std::min(num.size(), n);
 			return std::make_pair(
-				uint_t(num._value, num._begin, num._begin + split),
-				uint_t(num._value, num._begin + split, num._end)
+				uint_t(std::vector<uint64_t>(it, it_split)),
+				uint_t(std::vector<uint64_t>(it_split, num.end()))
 			);
 		}
 
@@ -443,54 +437,49 @@ class uint_t {
 			auto rhs_sz = rhs.size();
 
 			uint_t result;
-			auto rhs_begin = rhs._begin;
+			auto rhs_it = rhs.begin();
 			size_t shift = 0;
 
 			while (rhs_sz > 0) {
 				// Multiply the next slice of rhs by lhs and add into result:
 				auto slice_size = std::min(lhs_sz, rhs_sz);
-				auto rhs_slice = uint_t(rhs._value, rhs_begin, rhs_begin + slice_size);
-				auto product = karatsuba_mult(lhs, rhs_slice, cutoff);
+				auto rhs_end = uint_t(std::vector<uint64_t>(rhs_it, rhs_it + slice_size));
+				auto product = karatsuba_mult(lhs, rhs_end, cutoff);
 				result.add(product, shift);
 				shift += slice_size;
 				rhs_sz -= slice_size;
-				rhs_begin += slice_size;
+				rhs_it += slice_size;
 			}
 
 			return result;
 		}
 
-		uint_t(std::shared_ptr<std::vector<uint64_t>> value, size_t begin, size_t slice) :
-			_begin(begin),
-			_end(slice),
+		uint_t(const std::vector<uint64_t>& value) :
+			_shifts(0),
 			_value(value),
-			_carry(false) { }
+			_carry(false) {
+			trim();
+		}
 
 	public:
 		// Constructors
 		uint_t() :
-			_begin(0),
-			_end(0),
-			_value(std::make_shared<std::vector<uint64_t>>()),
+			_shifts(0),
 			_carry(false) { }
 
 		uint_t(const uint_t& o) :
-			_begin(o._begin),
-			_end(o._end),
-			_value(std::make_shared<std::vector<uint64_t>>(*o._value)),
+			_shifts(o._shifts),
+			_value(o._value),
 			_carry(o._carry) { }
 
 		uint_t(uint_t&& o) :
-			_begin(std::move(o._begin)),
-			_end(std::move(o._end)),
+			_shifts(std::move(o._shifts)),
 			_value(std::move(o._value)),
 			_carry(std::move(o._carry)) { }
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T& value) :
-			_begin(0),
-			_end(0),
-			_value(std::make_shared<std::vector<uint64_t>>()),
+			_shifts(0),
 			_carry(false) {
 			if (value) {
 				append(static_cast<uint64_t>(value));
@@ -499,9 +488,7 @@ class uint_t {
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		uint_t(const T& value, Args... args) :
-			_begin(0),
-			_end(0),
-			_value(std::make_shared<std::vector<uint64_t>>()),
+			_shifts(0),
 			_carry(false) {
 			_uint_t(args...);
 			append(static_cast<uint64_t>(value));
@@ -526,15 +513,13 @@ class uint_t {
 
 		// Assignment Operator
 		uint_t& operator=(const uint_t& o) {
-			_begin = o._begin;
-			_end = o._end;
+			_shifts = o._shifts;
 			_value = o._value;
 			_carry = o._carry;
 			return *this;
 		}
 		uint_t& operator=(uint_t&& o) {
-			_begin = std::move(o._begin);
-			_end = std::move(o._end);
+			_shifts = std::move(o._shifts);
 			_value = std::move(o._value);
 			_carry = std::move(o._carry);
 			return *this;
@@ -706,7 +691,7 @@ class uint_t {
 			auto shifts = shift / 64;
 			shift = shift % 64;
 			if (shifts) {
-				_begin += shifts;
+				_shifts += shifts;
 			}
 			if (shift) {
 				uint64_t shifted = 0;
