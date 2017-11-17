@@ -439,7 +439,7 @@ class uint_t {
 		// Karatsuba would pay off *if* the inputs had balanced sizes.
 		// View rhs as a sequence of slices, each with lhs.size() digits,
 		// and multiply the slices by lhs, one at a time.
-		static uint_t karatsuba_lopsided_mult(const uint_t& lhs, const uint_t& rhs) {
+		static uint_t karatsuba_lopsided_mult(const uint_t& lhs, const uint_t& rhs, size_t cutoff) {
 			const auto& lhs_sz = lhs.size();
 			auto rhs_sz = rhs.size();
 
@@ -451,7 +451,7 @@ class uint_t {
 				// Multiply the next slice of rhs by lhs and add into result:
 				auto slice_size = std::min(lhs_sz, rhs_sz);
 				auto rhs_slice = uint_t(std::vector<uint64_t>(rhs_it, rhs_it + slice_size));
-				auto product = karatsuba_mult(lhs, rhs_slice);
+				auto product = karatsuba_mult(lhs, rhs_slice, cutoff);
 				result.add(product, shift);
 				shift += slice_size;
 				rhs_sz -= slice_size;
@@ -899,23 +899,23 @@ class uint_t {
 		}
 
 		// Karatsuba multiplication
-		static uint_t karatsuba_mult(const uint_t& lhs, const uint_t& rhs) {
+		static uint_t karatsuba_mult(const uint_t& lhs, const uint_t& rhs, size_t cutoff = 1) {
 			const auto& lhs_sz = lhs.size();
 			const auto& rhs_sz = rhs.size();
 
 			if (lhs_sz > rhs_sz) {
 				// rhs should be the largest:
-				return karatsuba_mult(rhs, lhs);
+				return karatsuba_mult(rhs, lhs, cutoff);
 			}
 
-			if (lhs_sz <= karatsuba_cutoff) {
+			if (lhs_sz <= cutoff) {
 				return long_mult(lhs, rhs);
 			}
 
 			// If a is too small compared to b, splitting on b gives a degenerate case
 			// in which Karatsuba may be (even much) less efficient than long multiplication.
 			if (2 * lhs_sz <= rhs_sz) {
-				return karatsuba_lopsided_mult(lhs, rhs);
+				return karatsuba_lopsided_mult(lhs, rhs, cutoff);
 			}
 
 			// Karatsuba:
@@ -946,9 +946,9 @@ class uint_t {
 			auto& D = rhs_pair.first;  // lo
 
 			// Get the pieces:
-			auto AC = karatsuba_mult(A, C);
-			auto BD = karatsuba_mult(B, D);
-			auto AD_BC = karatsuba_mult((A + B), (C + D)) - AC - BD;
+			auto AC = karatsuba_mult(A, C, cutoff);
+			auto BD = karatsuba_mult(B, D, cutoff);
+			auto AD_BC = karatsuba_mult((A + B), (C + D), cutoff) - AC - BD;
 
 			// Join the pieces, AC and BD (can't overlap) into BD:
 			BD.grow(shift * 2 + AC.size());
@@ -976,7 +976,7 @@ class uint_t {
 			}
 
 			// return long_mult(lhs, rhs);
-			return karatsuba_mult(lhs, rhs);
+			return karatsuba_mult(lhs, rhs, karatsuba_cutoff);
 		}
 
 		uint_t operator*(const uint_t& rhs) const {
