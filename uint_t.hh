@@ -243,16 +243,16 @@ class uint_t {
 			*result = r;
 			return r >> 64;
 		#else
-			uint64_t x0 = x & 0xffffffff;
+			uint64_t x0 = x & 0xffffffffUL;
 			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffff;
+			uint64_t y0 = y & 0xffffffffUL;
 			uint64_t y1 = y >> 32;
 
-			uint64_t u = (x0 * y0) + (a & 0xffffffff) + (c & 0xffffffff);
+			uint64_t u = (x0 * y0) + (a & 0xffffffffUL) + (c & 0xffffffffUL);
 			uint64_t v = (x1 * y0) + (u >> 32) + (a >> 32) + (c >> 32);
-			uint64_t w = (x0 * y1) + (v & 0xffffffff);
+			uint64_t w = (x0 * y1) + (v & 0xffffffffUL);
 
-			*result = (w << 32) + (u & 0xffffffff); // low
+			*result = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
 		#endif
 		}
@@ -269,14 +269,14 @@ class uint_t {
 			*result = r;
 			return static_cast<bool>(r >> 64);
 		#else
-			uint64_t x0 = x & 0xffffffff;
+			uint64_t x0 = x & 0xffffffffUL;
 			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffff;
+			uint64_t y0 = y & 0xffffffffUL;
 			uint64_t y1 = y >> 32;
 
 			auto u = x0 + y0 + c;
 			auto v = x1 + y1 + static_cast<bool>(u >> 32);
-			*result = (v << 32) + (u & 0xffffffff);
+			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
 		#endif
 		}
@@ -293,14 +293,14 @@ class uint_t {
 			*result = r;
 			return static_cast<bool>(r >> 64);
 		#else
-			uint64_t x0 = x & 0xffffffff;
+			uint64_t x0 = x & 0xffffffffUL;
 			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffff;
+			uint64_t y0 = y & 0xffffffffUL;
 			uint64_t y1 = y >> 32;
 
 			auto u = x0 - y0 - c;
 			auto v = x1 - y1 - static_cast<bool>(u >> 32);
-			*result = (v << 32) + (u & 0xffffffff);
+			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
 		#endif
 		}
@@ -1021,7 +1021,7 @@ class uint_t {
 			auto rit_lhs = lhs.rbegin();
 			auto rit_lhs_e = lhs.rend();
 
-			uint_t q;
+			auto q = uint_0();
 			q.resize(lhs.size(), 0);
 			auto rit_q = q.rbegin();
 
