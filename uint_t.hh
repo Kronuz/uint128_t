@@ -1029,7 +1029,6 @@ class uint_t {
 				return lhs;
 			}
 
-			// return long_mult(lhs, rhs);
 			return karatsuba_mult(lhs, rhs, karatsuba_cutoff);
 		}
 
@@ -1051,43 +1050,6 @@ class uint_t {
 			static uint_t uint_1(1);
 			return uint_1;
 		}
-
-		// Naive Division: keep subtracting until lhs == 0
-		// Slowest of all
-		/*static std::pair<uint_t, uint_t> naive_divmod(const uint_t& lhs, const uint_t& rhs) {
-			auto q = uint_0();
-			auto r = lhs;
-
-			while (r >= rhs) {
-				r -= rhs;
-				++q;
-			}
-
-			return std::make_pair(q, r);
-		}*/
-
-		// Long division
-		// Slower than Knuth's
-		/*static std::pair<uint_t, uint_t> long_divmod(const uint_t& lhs, const uint_t& rhs) {
-			auto q = uint_0();
-			auto r = uint_0();
-
-			for (size_t x = lhs.bits(); x; --x) {
-				q <<= uint_1();
-				r <<= uint_1();
-
-				if (lhs[x - 1]) {
-					++r;
-				}
-
-				if (r >= rhs) {
-					r -= rhs;
-					++q;
-				}
-			}
-
-			return std::make_pair(q, r);
-		}*/
 
 		// Single word division
 		// Fastests, but ONLY for single sized rhs
@@ -1230,8 +1192,6 @@ class uint_t {
 				return single_divmod(lhs, rhs);
 			}
 
-			// return naive_divmod(lhs, rhs);
-			// return long_divmod(lhs, rhs);
 			return knuth_divmod(lhs, rhs);
 		}
 
