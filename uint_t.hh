@@ -233,14 +233,38 @@ class uint_t {
 		#endif
 		}
 
-		static uint64_t multadd(uint64_t x, uint64_t y, uint64_t a, uint64_t c, uint64_t* result) {
+		static uint64_t mul(uint64_t x, uint64_t y, uint64_t* lo) {
 		#if defined HAVE___UMUL128 && defined HAVE___ADDCARRY_U64
 			uint64_t h;
 			uint64_t l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
-			return h + _addcarry_u64(c, l, a, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
+			return h;
+		#elif defined HAVE____INT64_T
+			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y);
+			*lo = r;
+			return r >> 64;
+		#else
+			uint64_t x0 = x & 0xffffffffUL;
+			uint64_t x1 = x >> 32;
+			uint64_t y0 = y & 0xffffffffUL;
+			uint64_t y1 = y >> 32;
+
+			uint64_t u = (x0 * y0);
+			uint64_t v = (x1 * y0) + (u >> 32);
+			uint64_t w = (x0 * y1) + (v & 0xffffffffUL);
+
+			*lo = (w << 32) + (u & 0xffffffffUL); // low
+			return (x1 * y1) + (v >> 32) + (w >> 32); // high
+		#endif
+		}
+
+		static uint64_t muladd(uint64_t x, uint64_t y, uint64_t a, uint64_t c, uint64_t* lo) {
+		#if defined HAVE___UMUL128 && defined HAVE___ADDCARRY_U64
+			uint64_t h;
+			uint64_t l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
+			return h + _addcarry_u64(c, l, a, lo);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
 		#elif defined HAVE____INT64_T
 			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(a) + static_cast<__uint128_t>(c);
-			*result = r;
+			*lo = r;
 			return r >> 64;
 		#else
 			uint64_t x0 = x & 0xffffffffUL;
@@ -252,8 +276,58 @@ class uint_t {
 			uint64_t v = (x1 * y0) + (u >> 32) + (a >> 32) + (c >> 32);
 			uint64_t w = (x0 * y1) + (v & 0xffffffffUL);
 
-			*result = (w << 32) + (u & 0xffffffffUL); // low
+			*lo = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
+		#endif
+		}
+
+		static uint64_t divrem(uint64_t x_hi, uint64_t x_lo, uint64_t y, uint64_t* result) {
+		#if defined HAVE____INT64_T
+			auto x = static_cast<__uint128_t>(x_hi) << 64 | static_cast<__uint128_t>(x_lo);
+			uint64_t q = x / y;
+			uint64_t r = x % y;
+
+			*result = q;
+			return r;
+		#else
+			// quotient
+			uint64_t q = x_lo << 1;
+
+			// remainder
+			uint64_t r = x_hi;
+
+			uint64_t carry = x_lo >> 63;
+			int i;
+
+			for (i = 0; i < 64; i++) {
+				auto tmp = r >> 63;
+				r <<= 1;
+				r |= carry;
+				carry = tmp;
+
+				if (carry == 0) {
+					if (r >= y) {
+						carry = 1;
+					} else {
+						tmp = q >> 63;
+						q <<= 1;
+						q |= carry;
+						carry = tmp;
+						continue;
+					}
+				}
+
+				r -= y;
+				r -= (1 - carry);
+				carry = 1;
+				tmp = q >> 63;
+				q <<= 1;
+				q |= carry;
+				carry = tmp;
+			}
+
+			*result = q;
+			return r;
 		#endif
 		}
 
@@ -283,10 +357,10 @@ class uint_t {
 
 		static uint64_t subborrow(uint64_t x, uint64_t y, uint64_t c, uint64_t* result) {
 		#if defined HAVE___SUBBORROW_U64
-			return _subborrow_u64(c, x, y, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
+			return _subborrow_u64(c, x, y, result);  // _subborrow_u64(carryin, x, y, *sum) -> carryout
 		#elif defined HAVE____BUILTIN_SUBCLL
 			unsigned long long carryout;
-			*result = __builtin_subcll(x, y, c, &carryout);  // __builtin_addcll(x, y, carryin, *carryout) -> sum
+			*result = __builtin_subcll(x, y, c, &carryout);  // __builtin_subcll(x, y, carryin, *carryout) -> sum
 			return carryout;
 		#elif defined HAVE____INT64_T
 			auto r = static_cast<__uint128_t>(x) - static_cast<__uint128_t>(y) - static_cast<__uint128_t>(c);
@@ -312,7 +386,7 @@ class uint_t {
 			// Masks the last value of internal vector
 			mask &= 0x3f;
 			if (mask && rit != rit_e) {
-				*rit &= (1ULL << mask) - 1;
+				*rit &= (static_cast<uint64_t>(1) << mask) - 1;
 			}
 
 			// Removes all unused zeros from the internal vector
@@ -860,7 +934,7 @@ class uint_t {
 					auto _it_result = it_result;
 					uint64_t carry = 0;
 					for (; _it_rhs != it_rhs_e; ++_it_rhs, ++_it_result) {
-						carry = multadd(*_it_rhs, lhs_it_val, *_it_result, carry, &*_it_result);
+						carry = muladd(*_it_rhs, lhs_it_val, *_it_result, carry, &*_it_result);
 					}
 					if (carry) {
 						*_it_result++ = carry;
@@ -979,6 +1053,7 @@ class uint_t {
 		}
 
 		// Naive Division: keep subtracting until lhs == 0
+		// Slowest of all
 		static std::pair<uint_t, uint_t> naive_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = lhs;
@@ -992,6 +1067,7 @@ class uint_t {
 		}
 
 		// Long division
+		// Slower than Knuth's
 		static std::pair<uint_t, uint_t> long_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = uint_0();
@@ -1013,7 +1089,8 @@ class uint_t {
 			return std::make_pair(q, r);
 		}
 
-		// Single division (for single sized rhs)
+		// Single word division
+		// Fastests, but ONLY for single sized rhs
 		static std::pair<uint_t, uint_t> single_divmod(const uint_t& lhs, const uint_t& rhs) {
 			assert(rhs.size() == 1);
 			auto n = rhs.front();
@@ -1025,18 +1102,108 @@ class uint_t {
 			q.resize(lhs.size(), 0);
 			auto rit_q = q.rbegin();
 
-			__uint128_t r = 0;
-
+			uint64_t r = 0;
 			for (; rit_lhs != rit_lhs_e; ++rit_lhs, ++rit_q) {
-				r = (r << 64) | *rit_lhs;
-				auto hi = r / n;
-				r -= hi * n;
-				*rit_q = hi;
+				r = divrem(r, *rit_lhs, n, &*rit_q);
 			}
 
 			q.trim();
 
-			return std::make_pair(q, r);
+			return std::make_pair(q, uint_t(r));
+		}
+
+		// Implementation of Knuth's Algorithm D
+		static std::pair<uint_t, uint_t> knuth_divmod(const uint_t& lhs, const uint_t& rhs) {
+			auto v = lhs;
+			auto w = rhs;
+
+			auto v_size = v.size();
+			auto w_size = w.size();
+			assert(v_size >= w_size && w_size >= 2);
+
+			// D1. normalize: shift rhs left so that its top digit is >= 63 bits.
+			// shift lhs left by the same amount. Results go into w and v.
+			auto d = 64 - _bits(w.back());
+			v <<= d;
+			w <<= d;
+
+			if (*v.rbegin() >= *w.rbegin()) {
+				v.append(0);
+			}
+			v_size = v.size();
+			v.append(0);
+
+			// Now *v.rbegin() < *w.rbegin() so quotient has at most
+			// (and usually exactly) k = v.size() - w.size() digits.
+			auto k = v_size - w_size;
+			auto q = uint_0();
+			q.resize(k + 1, 0);
+
+			auto rit_q = q.rend() - (k + 1);
+
+			auto it_v_b = v.begin();
+			auto it_v_k = it_v_b + k;
+
+			auto it_w = w.begin();
+			auto it_w_e = w.end();
+
+			auto rit_w = w.rbegin();
+			auto wm1 = *rit_w++;
+			auto wm2 = *rit_w;
+
+			// D2. inner loop: divide v[k+0..k+n] by w[0..n]
+			for (; it_v_k >= it_v_b; --it_v_k, ++rit_q) {
+				// D3. Compute estimate quotient digit q; may overestimate by 1 (rare)
+				uint64_t _q;
+				auto _r = divrem(*(it_v_k + w_size), *(it_v_k + w_size - 1), wm1, &_q);
+				uint64_t mullo = 0;
+				auto mulhi = mul(wm2, _q, &mullo);
+				auto rlo = *(it_v_k + w_size - 2);
+				while (mulhi > _r || (mulhi == _r && mullo > rlo)) {
+					--_q;
+					auto _r2 = _r + wm1;
+					if (_r2 < _r) break;
+					_r = _r2;
+					mulhi = mul(wm2, _q, &mullo);
+				}
+
+				// D4. Multiply and subtract _q * w0[0:size_w] from vk[0:size_w+1]
+				auto _it_v = it_v_k;
+				auto _it_w = it_w;
+				mulhi = 0;
+				uint64_t carry = 0;
+				for (; _it_w != it_w_e; ++_it_v, ++_it_w) {
+					uint64_t mullo = 0;
+					mulhi = muladd(*_it_w, _q, 0, mulhi, &mullo);
+					carry = subborrow(*_it_v, mullo, carry, &*_it_v);
+				}
+				carry = subborrow(*_it_v, 0, carry, &*_it_v);
+
+				if (carry) {
+					// D6. Add w back if q was too large (this branch taken rarely)
+					--_q;
+
+					auto _it_v = it_v_k;
+					auto _it_w = it_w;
+					carry = 0;
+					for (; _it_w != it_w_e; ++_it_v, ++_it_w) {
+						carry = addcarry(*_it_v, *_it_w, carry, &*_it_v);
+					}
+					carry = addcarry(*_it_v, 0, carry, &*_it_v);
+				}
+
+				/* store quotient digit */
+				*rit_q = _q;
+			}
+
+			// D8. unnormalize: unshift remainder.
+			v.resize(w_size);
+			v >>= d;
+
+			q.trim();
+			v.trim();
+
+			return std::make_pair(q, v);
 		}
 
 		static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
@@ -1048,7 +1215,7 @@ class uint_t {
 				// Fast division and modulo for single value
 				const auto& a = *lhs.begin();
 				const auto& b = *rhs.begin();
-				return std::make_pair(a / b, a % b);
+				return std::make_pair(uint_t(a / b), uint_t(a % b));
 			}
 			if (rhs == uint_1()) {
 				return std::make_pair(lhs, uint_0());
@@ -1064,7 +1231,8 @@ class uint_t {
 			}
 
 			// return naive_divmod(lhs, rhs);
-			return long_divmod(lhs, rhs);
+			// return long_divmod(lhs, rhs);
+			return knuth_divmod(lhs, rhs);
 		}
 
 		uint_t operator/(const uint_t& rhs) const {
