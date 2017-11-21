@@ -1054,7 +1054,7 @@ class uint_t {
 
 		// Naive Division: keep subtracting until lhs == 0
 		// Slowest of all
-		static std::pair<uint_t, uint_t> naive_divmod(const uint_t& lhs, const uint_t& rhs) {
+		/*static std::pair<uint_t, uint_t> naive_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = lhs;
 
@@ -1064,11 +1064,11 @@ class uint_t {
 			}
 
 			return std::make_pair(q, r);
-		}
+		}*/
 
 		// Long division
 		// Slower than Knuth's
-		static std::pair<uint_t, uint_t> long_divmod(const uint_t& lhs, const uint_t& rhs) {
+		/*static std::pair<uint_t, uint_t> long_divmod(const uint_t& lhs, const uint_t& rhs) {
 			auto q = uint_0();
 			auto r = uint_0();
 
@@ -1087,7 +1087,7 @@ class uint_t {
 			}
 
 			return std::make_pair(q, r);
-		}
+		}*/
 
 		// Single word division
 		// Fastests, but ONLY for single sized rhs
