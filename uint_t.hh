@@ -57,23 +57,59 @@ to header-only and extended to arbitrary bit length.
 #if defined _MSC_VER
 #  define HAVE___ADDCARRY_U64
 #  define HAVE___SUBBORROW_U64
+#  define HAVE___ADDCARRY_U32
+#  define HAVE___SUBBORROW_U32
+#  define HAVE___ADDCARRY_U16
+#  define HAVE___SUBBORROW_U16
 #  define HAVE___UMUL128
+#  define HAVE___UMUL64
+#  define HAVE___UMUL32
 #  include <intrin.h>
   typedef unsigned __int64 uint64_t;
+  typedef unsigned __int32 uint32_t;
+  typedef unsigned __int16 uint16_t;
+  typedef unsigned char    uint8_t;
 #endif
 
 #if (defined(__clang__) && __has_builtin(__builtin_clzll)) || (defined(__GNUC__ ) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)))
 #  define HAVE____BUILTIN_CLZLL
 #endif
+#if (defined(__clang__) && __has_builtin(__builtin_clzl)) || (defined(__GNUC__ ) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)))
+#  define HAVE____BUILTIN_CLZL
+#endif
+#if (defined(__clang__) && __has_builtin(__builtin_clz)) || (defined(__GNUC__ ) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)))
+#  define HAVE____BUILTIN_CLZ
+#endif
 #if (defined(__clang__) && __has_builtin(__builtin_addcll))
 #  define HAVE____BUILTIN_ADDCLL
+#endif
+#if (defined(__clang__) && __has_builtin(__builtin_addcl))
+#  define HAVE____BUILTIN_ADDCL
+#endif
+#if (defined(__clang__) && __has_builtin(__builtin_addc))
+#  define HAVE____BUILTIN_ADDC
 #endif
 #if (defined(__clang__) && __has_builtin(__builtin_subcll))
 #  define HAVE____BUILTIN_SUBCLL
 #endif
+#if (defined(__clang__) && __has_builtin(__builtin_subcl))
+#  define HAVE____BUILTIN_SUBCL
+#endif
+#if (defined(__clang__) && __has_builtin(__builtin_subc))
+#  define HAVE____BUILTIN_SUBC
+#endif
 
 #if defined __SIZEOF_INT128__
-#define HAVE____INT64_T
+#define HAVE____INT128_T
+#endif
+
+
+#ifndef DIGIT_T
+#define DIGIT_T        uint64_t
+#endif
+
+#ifndef HALF_DIGIT_T
+#define HALF_DIGIT_T   uint32_t
 #endif
 
 class uint_t;
@@ -86,13 +122,23 @@ namespace std {  // This is probably not a good idea
 }
 
 class uint_t {
+public:
+	using                   digit             = DIGIT_T;
+	using                   half_digit        = HALF_DIGIT_T;
+
+    static constexpr size_t digit_octets      = sizeof(digit);          // number of octets per digit
+    static constexpr size_t digit_bits        = digit_octets * 8;       // number of bits per digit
+    static constexpr size_t half_digit_octets = sizeof(half_digit);     // number of octets per half_digit
+    static constexpr size_t half_digit_bits   = half_digit_octets * 8;  // number of bits per half_digit
+    static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
+
 	public:
 		static constexpr size_t karatsuba_cutoff = 70;
 		static constexpr double growth_factor = 1.5;
 
 		size_t _shifts;
 
-		std::vector<uint64_t> _value;
+		std::vector<digit> _value;
 		bool _carry;
 
 		// vector window
@@ -106,7 +152,7 @@ class uint_t {
 			return cc;
 		}
 
-		void prepend(size_t sz, const uint64_t& val) {
+		void prepend(size_t sz, const digit& val) {
 			auto min = std::min(_shifts, sz);
 			if (min) {
 				std::fill(_value.begin() + _shifts - min, _value.begin() + _shifts, val);
@@ -122,7 +168,7 @@ class uint_t {
 			}
 		}
 
-		void append(const uint64_t& val) {
+		void append(const digit& val) {
 			grow(_value.size() + 1);
 			_value.push_back(val);
 		}
@@ -136,7 +182,7 @@ class uint_t {
 			_value.resize(sz + _shifts);
 		}
 
-		void resize(size_t sz, const uint64_t& c) {
+		void resize(size_t sz, const digit& c) {
 			_value.resize(sz + _shifts, c);
 		}
 
@@ -145,11 +191,11 @@ class uint_t {
 			_shifts = 0;
 		}
 
-		uint64_t* data() noexcept {
+		digit* data() noexcept {
 			return _value.data() + _shifts;
 		}
 
-		const uint64_t* data() const noexcept {
+		const digit* data() const noexcept {
 			return _value.data() + _shifts;
 		}
 
@@ -157,51 +203,51 @@ class uint_t {
 			return _value.size() - _shifts;
 		}
 
-		std::vector<uint64_t>::iterator begin() noexcept {
+		std::vector<digit>::iterator begin() noexcept {
 			return _value.begin() + _shifts;
 		}
 
-		std::vector<uint64_t>::const_iterator begin() const noexcept {
+		std::vector<digit>::const_iterator begin() const noexcept {
 			return _value.cbegin() + _shifts;
 		}
 
-		std::vector<uint64_t>::iterator end() noexcept {
+		std::vector<digit>::iterator end() noexcept {
 			return _value.end();
 		}
 
-		std::vector<uint64_t>::const_iterator end() const noexcept {
+		std::vector<digit>::const_iterator end() const noexcept {
 			return _value.cend();
 		}
 
-		std::vector<uint64_t>::reverse_iterator rbegin() noexcept {
+		std::vector<digit>::reverse_iterator rbegin() noexcept {
 			return _value.rbegin();
 		}
 
-		std::vector<uint64_t>::const_reverse_iterator rbegin() const noexcept {
+		std::vector<digit>::const_reverse_iterator rbegin() const noexcept {
 			return _value.crbegin();
 		}
 
-		std::vector<uint64_t>::reverse_iterator rend() noexcept {
-			return std::vector<uint64_t>::reverse_iterator(_value.begin() + _shifts);
+		std::vector<digit>::reverse_iterator rend() noexcept {
+			return std::vector<digit>::reverse_iterator(_value.begin() + _shifts);
 		}
 
-		std::vector<uint64_t>::const_reverse_iterator rend() const noexcept {
-			return std::vector<uint64_t>::const_reverse_iterator(_value.cbegin() + _shifts);
+		std::vector<digit>::const_reverse_iterator rend() const noexcept {
+			return std::vector<digit>::const_reverse_iterator(_value.cbegin() + _shifts);
 		}
 
-		std::vector<uint64_t>::reference front() {
+		std::vector<digit>::reference front() {
 			return *begin();
 		}
 
-		std::vector<uint64_t>::const_reference front() const {
+		std::vector<digit>::const_reference front() const {
 			return *begin();
 		}
 
-		std::vector<uint64_t>::reference back() {
+		std::vector<digit>::reference back() {
 			return *rbegin();
 		}
 
-		std::vector<uint64_t>::const_reference back() const {
+		std::vector<digit>::const_reference back() const {
 			return *rbegin();
 		}
 
@@ -209,188 +255,379 @@ class uint_t {
 
 		template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		void _uint_t(const T& value) {
-			append(static_cast<uint64_t>(value));
+			append(static_cast<digit>(value));
 		}
 
 		template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 		void _uint_t(const T& value, Args... args) {
 			_uint_t(args...);
-			append(static_cast<uint64_t>(value));
+			append(static_cast<digit>(value));
 		}
 
 		//
 
-		static uint64_t _bits(uint64_t x) {
+		static digit _bits(digit x) {
 		#if defined HAVE____BUILTIN_CLZLL
-			return x ? 64 - __builtin_clzll(x) : 1;
-		#else
-			uint64_t c = x ? 0 : 1;
-			while (x) {
-				x >>= 1;
-				++c;
+			if (digit_octets == sizeof(unsigned long long)) {
+				return x ? digit_bits - __builtin_clzll(x) : 1;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_CLZL
+			if (digit_octets == sizeof(unsigned long)) {
+				return x ? digit_bits - __builtin_clzl(x) : 1;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_CLZ
+			if (digit_octets == sizeof(unsigned)) {
+				return x ? digit_bits - __builtin_clz(x) : 1;
+			} else
+		#endif
+			{
+				digit c = x ? 0 : 1;
+				while (x) {
+					x >>= 1;
+					++c;
+				}
+				return c;
 			}
-			return c;
-		#endif
 		}
 
-		static uint64_t mul(uint64_t x, uint64_t y, uint64_t* lo) {
+		static digit mul(digit x, digit y, digit* lo) {
+		#if defined HAVE___UMUL128
+			if (digit_bits == 64) {
+				digit h;
+				digit l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
+				return h;
+			} else
+		#endif
+		#if defined HAVE___UMUL64
+			if (digit_bits == 32) {
+				digit h;
+				digit l = _umul64(x, y, &h);  // _umul64(x, y, *hi) -> lo
+				return h;
+			} else
+		#endif
+		#if defined HAVE___UMUL32
+			if (digit_bits == 16) {
+				digit h;
+				digit l = _umul32(x, y, &h);  // _umul32(x, y, *hi) -> lo
+				return h;
+			} else
+		#endif
+		#if defined HAVE____INT128_T
+			if (digit_bits == 64) {
+				auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y);
+				*lo = r;
+				return r >> digit_bits;
+			} else
+		#endif
+			if (digit_bits == 64) {
+				digit x0 = x & 0xffffffffUL;
+				digit x1 = x >> 32;
+				digit y0 = y & 0xffffffffUL;
+				digit y1 = y >> 32;
+
+				digit u = (x0 * y0);
+				digit v = (x1 * y0) + (u >> 32);
+				digit w = (x0 * y1) + (v & 0xffffffffUL);
+
+				*lo = (w << 32) + (u & 0xffffffffUL); // low
+				return (x1 * y1) + (v >> 32) + (w >> 32); // high
+			} else if (digit_bits == 32) {
+				auto r = static_cast<uint64_t>(x) * static_cast<uint64_t>(y);
+				*lo = r;
+				return r >> digit_bits;
+			} else if (digit_bits == 16) {
+				auto r = static_cast<uint32_t>(x) * static_cast<uint32_t>(y);
+				*lo = r;
+				return r >> digit_bits;
+			} else if (digit_bits == 8) {
+				auto r = static_cast<uint16_t>(x) * static_cast<uint16_t>(y);
+				*lo = r;
+				return r >> digit_bits;
+			}
+		}
+
+		static digit muladd(digit x, digit y, digit a, digit c, digit* lo) {
 		#if defined HAVE___UMUL128 && defined HAVE___ADDCARRY_U64
-			uint64_t h;
-			uint64_t l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
-			return h;
-		#elif defined HAVE____INT64_T
-			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y);
-			*lo = r;
-			return r >> 64;
-		#else
-			uint64_t x0 = x & 0xffffffffUL;
-			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffffUL;
-			uint64_t y1 = y >> 32;
-
-			uint64_t u = (x0 * y0);
-			uint64_t v = (x1 * y0) + (u >> 32);
-			uint64_t w = (x0 * y1) + (v & 0xffffffffUL);
-
-			*lo = (w << 32) + (u & 0xffffffffUL); // low
-			return (x1 * y1) + (v >> 32) + (w >> 32); // high
+			if (digit_bits == 64) {
+				digit h;
+				digit l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
+				return h + _addcarry_u64(c, l, a, lo);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
+			} else
 		#endif
+		#if defined HAVE___UMUL64 && defined HAVE___ADDCARRY_U32
+			if (digit_bits == 32) {
+				digit h;
+				digit l = _umul64(x, y, &h);  // _umul64(x, y, *hi) -> lo
+				return h + _addcarry_u32(c, l, a, lo);  // _addcarry_u32(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE___UMUL32 && defined HAVE___ADDCARRY_U16
+			if (digit_bits == 16) {
+				digit h;
+				digit l = _umul32(x, y, &h);  // _umul32(x, y, *hi) -> lo
+				return h + _addcarry_u16(c, l, a, lo);  // _addcarry_u16(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE____INT128_T
+			if (digit_bits == 64) {
+				auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(a) + static_cast<__uint128_t>(c);
+				*lo = r;
+				return r >> digit_bits;
+			} else
+		#endif
+			if (digit_bits == 64) {
+				digit x0 = x & 0xffffffffUL;
+				digit x1 = x >> 32;
+				digit y0 = y & 0xffffffffUL;
+				digit y1 = y >> 32;
+
+				digit u = (x0 * y0) + (a & 0xffffffffUL) + (c & 0xffffffffUL);
+				digit v = (x1 * y0) + (u >> 32) + (a >> 32) + (c >> 32);
+				digit w = (x0 * y1) + (v & 0xffffffffUL);
+
+				*lo = (w << 32) + (u & 0xffffffffUL); // low
+				return (x1 * y1) + (v >> 32) + (w >> 32); // high
+			} else if (digit_bits == 32) {
+				auto r = static_cast<uint64_t>(x) * static_cast<uint64_t>(y) + static_cast<uint64_t>(a) + static_cast<uint64_t>(c);
+				*lo = r;
+				return r >> digit_bits;
+			} else if (digit_bits == 16) {
+				auto r = static_cast<uint32_t>(x) * static_cast<uint32_t>(y) + static_cast<uint32_t>(a) + static_cast<uint32_t>(c);
+				*lo = r;
+				return r >> digit_bits;
+			} else if (digit_bits == 8) {
+				auto r = static_cast<uint16_t>(x) * static_cast<uint16_t>(y) + static_cast<uint16_t>(a) + static_cast<uint16_t>(c);
+				*lo = r;
+				return r >> digit_bits;
+			}
 		}
 
-		static uint64_t muladd(uint64_t x, uint64_t y, uint64_t a, uint64_t c, uint64_t* lo) {
-		#if defined HAVE___UMUL128 && defined HAVE___ADDCARRY_U64
-			uint64_t h;
-			uint64_t l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
-			return h + _addcarry_u64(c, l, a, lo);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
-		#elif defined HAVE____INT64_T
-			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(a) + static_cast<__uint128_t>(c);
-			*lo = r;
-			return r >> 64;
-		#else
-			uint64_t x0 = x & 0xffffffffUL;
-			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffffUL;
-			uint64_t y1 = y >> 32;
+		static digit divrem(digit x_hi, digit x_lo, digit y, digit* result) {
+		#if defined HAVE____INT128_T
+			if (digit_bits == 64) {
+				auto x = static_cast<__uint128_t>(x_hi) << digit_bits | static_cast<__uint128_t>(x_lo);
+				digit q = x / y;
+				digit r = x % y;
 
-			uint64_t u = (x0 * y0) + (a & 0xffffffffUL) + (c & 0xffffffffUL);
-			uint64_t v = (x1 * y0) + (u >> 32) + (a >> 32) + (c >> 32);
-			uint64_t w = (x0 * y1) + (v & 0xffffffffUL);
-
-			*lo = (w << 32) + (u & 0xffffffffUL); // low
-			return (x1 * y1) + (v >> 32) + (w >> 32); // high
+				*result = q;
+				return r;
+			} else
 		#endif
-		}
+			if (digit_bits == 64) {
+				// quotient
+				digit q = x_lo << 1;
 
-		static uint64_t divrem(uint64_t x_hi, uint64_t x_lo, uint64_t y, uint64_t* result) {
-		#if defined HAVE____INT64_T
-			auto x = static_cast<__uint128_t>(x_hi) << 64 | static_cast<__uint128_t>(x_lo);
-			uint64_t q = x / y;
-			uint64_t r = x % y;
+				// remainder
+				digit r = x_hi;
 
-			*result = q;
-			return r;
-		#else
-			// quotient
-			uint64_t q = x_lo << 1;
+				digit carry = x_lo >> 63;
+				int i;
 
-			// remainder
-			uint64_t r = x_hi;
+				for (i = 0; i < 64; i++) {
+					auto tmp = r >> 63;
+					r <<= 1;
+					r |= carry;
+					carry = tmp;
 
-			uint64_t carry = x_lo >> 63;
-			int i;
-
-			for (i = 0; i < 64; i++) {
-				auto tmp = r >> 63;
-				r <<= 1;
-				r |= carry;
-				carry = tmp;
-
-				if (carry == 0) {
-					if (r >= y) {
-						carry = 1;
-					} else {
-						tmp = q >> 63;
-						q <<= 1;
-						q |= carry;
-						carry = tmp;
-						continue;
+					if (carry == 0) {
+						if (r >= y) {
+							carry = 1;
+						} else {
+							tmp = q >> 63;
+							q <<= 1;
+							q |= carry;
+							carry = tmp;
+							continue;
+						}
 					}
+
+					r -= y;
+					r -= (1 - carry);
+					carry = 1;
+					tmp = q >> 63;
+					q <<= 1;
+					q |= carry;
+					carry = tmp;
 				}
 
-				r -= y;
-				r -= (1 - carry);
-				carry = 1;
-				tmp = q >> 63;
-				q <<= 1;
-				q |= carry;
-				carry = tmp;
+				*result = q;
+				return r;
+			} else if (digit_bits == 32) {
+				auto x = static_cast<uint64_t>(x_hi) << digit_bits | static_cast<uint64_t>(x_lo);
+				digit q = x / y;
+				digit r = x % y;
+
+				*result = q;
+				return r;
+			} else if (digit_bits == 16) {
+				auto x = static_cast<uint32_t>(x_hi) << digit_bits | static_cast<uint32_t>(x_lo);
+				digit q = x / y;
+				digit r = x % y;
+
+				*result = q;
+				return r;
+			} else if (digit_bits == 8) {
+				auto x = static_cast<uint16_t>(x_hi) << digit_bits | static_cast<uint16_t>(x_lo);
+				digit q = x / y;
+				digit r = x % y;
+
+				*result = q;
+				return r;
 			}
-
-			*result = q;
-			return r;
-		#endif
 		}
 
-		static uint64_t addcarry(uint64_t x, uint64_t y, uint64_t c, uint64_t* result) {
+		static digit addcarry(digit x, digit y, digit c, digit* result) {
 		#if defined HAVE___ADDCARRY_U64
-			return _addcarry_u64(c, x, y, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
-		#elif defined HAVE____BUILTIN_ADDCLL
-			unsigned long long carryout;
-			*result = __builtin_addcll(x, y, c, &carryout);  // __builtin_addcll(x, y, carryin, *carryout) -> sum
-			return carryout;
-		#elif defined HAVE____INT64_T
-			auto r = static_cast<__uint128_t>(x) + static_cast<__uint128_t>(y) + static_cast<__uint128_t>(c);
-			*result = r;
-			return static_cast<bool>(r >> 64);
-		#else
-			uint64_t x0 = x & 0xffffffffUL;
-			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffffUL;
-			uint64_t y1 = y >> 32;
-
-			auto u = x0 + y0 + c;
-			auto v = x1 + y1 + static_cast<bool>(u >> 32);
-			*result = (v << 32) + (u & 0xffffffffUL);
-			return static_cast<bool>(v >> 32);
+			if (digit_bits == 64) {
+				return _addcarry_u64(c, x, y, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
+			} else
 		#endif
+		#if defined HAVE___ADDCARRY_U32
+			if (digit_bits == 32) {
+				return _addcarry_u32(c, x, y, result);  // _addcarry_u32(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE___ADDCARRY_U16
+			if (digit_bits == 16) {
+				return _addcarry_u16(c, x, y, result);  // _addcarry_u16(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_ADDCLL
+			if (digit_octets == sizeof(unsigned long long)) {
+				unsigned long long carryout;
+				*result = __builtin_addcll(x, y, c, &carryout);  // __builtin_addcll(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_ADDCL
+			if (digit_octets == sizeof(unsigned long)) {
+				unsigned long carryout;
+				*result = __builtin_addcl(x, y, c, &carryout);  // __builtin_addcl(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_ADDC
+			if (digit_octets == sizeof(unsigned)) {
+				unsigned carryout;
+				*result = __builtin_addc(x, y, c, &carryout);  // __builtin_addc(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____INT128_T
+			if (digit_bits == 64) {
+				auto r = static_cast<__uint128_t>(x) + static_cast<__uint128_t>(y) + static_cast<__uint128_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else
+		#endif
+			if (digit_bits == 64) {
+				digit x0 = x & 0xffffffffUL;
+				digit x1 = x >> 32;
+				digit y0 = y & 0xffffffffUL;
+				digit y1 = y >> 32;
+
+				auto u = x0 + y0 + c;
+				auto v = x1 + y1 + static_cast<bool>(u >> 32);
+				*result = (v << 32) + (u & 0xffffffffUL);
+				return static_cast<bool>(v >> 32);
+			} else if (digit_bits == 32) {
+				auto r = static_cast<uint64_t>(x) + static_cast<uint64_t>(y) + static_cast<uint64_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else if (digit_bits == 16) {
+				auto r = static_cast<uint32_t>(x) + static_cast<uint32_t>(y) + static_cast<uint32_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else if (digit_bits == 8) {
+				auto r = static_cast<uint16_t>(x) + static_cast<uint16_t>(y) + static_cast<uint16_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			}
 		}
 
-		static uint64_t subborrow(uint64_t x, uint64_t y, uint64_t c, uint64_t* result) {
+		static digit subborrow(digit x, digit y, digit c, digit* result) {
 		#if defined HAVE___SUBBORROW_U64
-			return _subborrow_u64(c, x, y, result);  // _subborrow_u64(carryin, x, y, *sum) -> carryout
-		#elif defined HAVE____BUILTIN_SUBCLL
-			unsigned long long carryout;
-			*result = __builtin_subcll(x, y, c, &carryout);  // __builtin_subcll(x, y, carryin, *carryout) -> sum
-			return carryout;
-		#elif defined HAVE____INT64_T
-			auto r = static_cast<__uint128_t>(x) - static_cast<__uint128_t>(y) - static_cast<__uint128_t>(c);
-			*result = r;
-			return static_cast<bool>(r >> 64);
-		#else
-			uint64_t x0 = x & 0xffffffffUL;
-			uint64_t x1 = x >> 32;
-			uint64_t y0 = y & 0xffffffffUL;
-			uint64_t y1 = y >> 32;
-
-			auto u = x0 - y0 - c;
-			auto v = x1 - y1 - static_cast<bool>(u >> 32);
-			*result = (v << 32) + (u & 0xffffffffUL);
-			return static_cast<bool>(v >> 32);
+			if (digit_bits == 64) {
+				return _subborrow_u64(c, x, y, result);  // _subborrow_u64(carryin, x, y, *sum) -> carryout
+			} else
 		#endif
+		#if defined HAVE___SUBBORROW_U32
+			if (digit_bits == 64) {
+				return _subborrow_u32(c, x, y, result);  // _subborrow_u32(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE___SUBBORROW_U16
+			if (digit_bits == 64) {
+				return _subborrow_u16(c, x, y, result);  // _subborrow_u16(carryin, x, y, *sum) -> carryout
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_SUBCLL
+			if (digit_octets == sizeof(unsigned long long)) {
+				unsigned long long carryout;
+				*result = __builtin_subcll(x, y, c, &carryout);  // __builtin_subcll(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_SUBCL
+			if (digit_octets == sizeof(unsigned long)) {
+				unsigned long carryout;
+				*result = __builtin_subcl(x, y, c, &carryout);  // __builtin_subcl(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____BUILTIN_SUBC
+			if (digit_octets == sizeof(unsigned)) {
+				unsigned carryout;
+				*result = __builtin_subc(x, y, c, &carryout);  // __builtin_subc(x, y, carryin, *carryout) -> sum
+				return carryout;
+			} else
+		#endif
+		#if defined HAVE____INT128_T
+			if (digit_bits == 64) {
+				auto r = static_cast<__uint128_t>(x) - static_cast<__uint128_t>(y) - static_cast<__uint128_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else
+		#endif
+			if (digit_bits == 64) {
+				digit x0 = x & 0xffffffffUL;
+				digit x1 = x >> 32;
+				digit y0 = y & 0xffffffffUL;
+				digit y1 = y >> 32;
+
+				auto u = x0 - y0 - c;
+				auto v = x1 - y1 - static_cast<bool>(u >> 32);
+				*result = (v << 32) + (u & 0xffffffffUL);
+				return static_cast<bool>(v >> 32);
+			} else if (digit_bits == 32) {
+				auto r = static_cast<uint64_t>(x) - static_cast<uint64_t>(y) - static_cast<uint64_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else if (digit_bits == 16) {
+				auto r = static_cast<uint32_t>(x) - static_cast<uint32_t>(y) - static_cast<uint32_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			} else if (digit_bits == 8) {
+				auto r = static_cast<uint16_t>(x) - static_cast<uint16_t>(y) - static_cast<uint16_t>(c);
+				*result = r;
+				return static_cast<bool>(r >> digit_bits);
+			}
 		}
 
-		void trim(uint64_t mask = 0) {
+		void trim(digit mask = 0) {
 			auto rit = rbegin();
 			auto rit_e = rend();
 
 			// Masks the last value of internal vector
-			mask &= 0x3f;
+			mask &= (digit_bits - 1);
 			if (mask && rit != rit_e) {
-				*rit &= (static_cast<uint64_t>(1) << mask) - 1;
+				*rit &= (static_cast<digit>(1) << mask) - 1;
 			}
 
 			// Removes all unused zeros from the internal vector
-			auto rit_f = std::find_if(rit, rit_e, [](const uint64_t& c) { return c; });
+			auto rit_f = std::find_if(rit, rit_e, [](const digit& c) { return c; });
 			resize(rit_e - rit_f); // shrink
 		}
 
@@ -498,8 +735,8 @@ class uint_t {
 			auto it = num.begin();
 			auto it_split = it + std::min(num.size(), n);
 			return std::make_pair(
-				uint_t(std::vector<uint64_t>(it, it_split)),
-				uint_t(std::vector<uint64_t>(it_split, num.end()))
+				uint_t(std::vector<digit>(it, it_split)),
+				uint_t(std::vector<digit>(it_split, num.end()))
 			);
 		}
 
@@ -518,7 +755,7 @@ class uint_t {
 			while (rhs_sz > 0) {
 				// Multiply the next slice of rhs by lhs and add into result:
 				auto slice_size = std::min(lhs_sz, rhs_sz);
-				auto rhs_end = uint_t(std::vector<uint64_t>(rhs_it, rhs_it + slice_size));
+				auto rhs_end = uint_t(std::vector<digit>(rhs_it, rhs_it + slice_size));
 				auto product = karatsuba_mult(lhs, rhs_end, cutoff);
 				result.add(product, shift);
 				shift += slice_size;
@@ -529,7 +766,7 @@ class uint_t {
 			return result;
 		}
 
-		uint_t(const std::vector<uint64_t>& value) :
+		uint_t(const std::vector<digit>& value) :
 			_shifts(0),
 			_value(value),
 			_carry(false) {
@@ -557,7 +794,7 @@ class uint_t {
 			_shifts(0),
 			_carry(false) {
 			if (value) {
-				append(static_cast<uint64_t>(value));
+				append(static_cast<digit>(value));
 			}
 		}
 
@@ -566,7 +803,7 @@ class uint_t {
 			_shifts(0),
 			_carry(false) {
 			_uint_t(args...);
-			append(static_cast<uint64_t>(value));
+			append(static_cast<digit>(value));
 			trim();
 		}
 
@@ -729,15 +966,15 @@ class uint_t {
 			}
 			assert(rhs.size() == 1);
 			auto shift = rhs.front();
-			auto shifts = shift / 64;
-			shift = shift % 64;
+			auto shifts = shift / digit_bits;
+			shift = shift % digit_bits;
 			if (shift) {
-				uint64_t shifted = 0;
+				digit shifted = 0;
 				auto it = begin();
 				auto it_e = end();
 				for (; it != it_e; ++it) {
 					auto v = (*it << shift) | shifted;
-					shifted = *it >> (64 - shift);
+					shifted = *it >> (digit_bits - shift);
 					*it = v;
 				}
 				if (shifted) {
@@ -757,7 +994,7 @@ class uint_t {
 		}
 
 		uint_t& operator>>=(const uint_t& rhs) {
-			if (rhs >= size() * 64) {
+			if (rhs >= size() * digit_bits) {
 				clear();
 				return *this;
 			} else if (rhs == 0) {
@@ -765,18 +1002,18 @@ class uint_t {
 			}
 			assert(rhs.size() == 1);
 			auto shift = rhs.front();
-			auto shifts = shift / 64;
-			shift = shift % 64;
+			auto shifts = shift / digit_bits;
+			shift = shift % digit_bits;
 			if (shifts) {
 				_shifts += shifts;
 			}
 			if (shift) {
-				uint64_t shifted = 0;
+				digit shifted = 0;
 				auto rit = rbegin();
 				auto rit_e = rend();
 				for (; rit != rit_e; ++rit) {
 					auto v = (*rit >> shift) | shifted;
-					shifted = *rit << (64 - shift);
+					shifted = *rit << (digit_bits - shift);
 					*rit = v;
 				}
 				trim();
@@ -846,7 +1083,7 @@ class uint_t {
 			auto it_e = end();
 			auto rhs_it = rhs.begin();
 			auto rhs_it_e = rhs.end();
-			uint64_t carry = 0;
+			digit carry = 0;
 			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
 				carry = addcarry(*it, *rhs_it, carry, &*it);
 			}
@@ -888,7 +1125,7 @@ class uint_t {
 			auto it_e = end();
 			auto rhs_it = rhs.begin();
 			auto rhs_it_e = rhs.end();
-			uint64_t carry = 0;
+			digit carry = 0;
 			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
 				carry = subborrow(*it, *rhs_it, carry, &*it);
 			}
@@ -932,7 +1169,7 @@ class uint_t {
 				if (auto lhs_it_val = *it_lhs) {
 					auto _it_rhs = it_rhs;
 					auto _it_result = it_result;
-					uint64_t carry = 0;
+					digit carry = 0;
 					for (; _it_rhs != it_rhs_e; ++_it_rhs, ++_it_result) {
 						carry = muladd(*_it_rhs, lhs_it_val, *_it_result, carry, &*_it_result);
 					}
@@ -1064,7 +1301,7 @@ class uint_t {
 			q.resize(lhs.size(), 0);
 			auto rit_q = q.rbegin();
 
-			uint64_t r = 0;
+			digit r = 0;
 			for (; rit_lhs != rit_lhs_e; ++rit_lhs, ++rit_q) {
 				r = divrem(r, *rit_lhs, n, &*rit_q);
 			}
@@ -1085,7 +1322,7 @@ class uint_t {
 
 			// D1. normalize: shift rhs left so that its top digit is >= 63 bits.
 			// shift lhs left by the same amount. Results go into w and v.
-			auto d = 64 - _bits(w.back());
+			auto d = digit_bits - _bits(w.back());
 			v <<= d;
 			w <<= d;
 
@@ -1116,9 +1353,9 @@ class uint_t {
 			// D2. inner loop: divide v[k+0..k+n] by w[0..n]
 			for (; it_v_k >= it_v_b; --it_v_k, ++rit_q) {
 				// D3. Compute estimate quotient digit q; may overestimate by 1 (rare)
-				uint64_t _q;
+				digit _q;
 				auto _r = divrem(*(it_v_k + w_size), *(it_v_k + w_size - 1), wm1, &_q);
-				uint64_t mullo = 0;
+				digit mullo = 0;
 				auto mulhi = mul(wm2, _q, &mullo);
 				auto rlo = *(it_v_k + w_size - 2);
 				while (mulhi > _r || (mulhi == _r && mullo > rlo)) {
@@ -1133,9 +1370,9 @@ class uint_t {
 				auto _it_v = it_v_k;
 				auto _it_w = it_w;
 				mulhi = 0;
-				uint64_t carry = 0;
+				digit carry = 0;
 				for (; _it_w != it_w_e; ++_it_v, ++_it_w) {
-					uint64_t mullo = 0;
+					digit mullo = 0;
 					mulhi = muladd(*_it_w, _q, 0, mulhi, &mullo);
 					carry = subborrow(*_it_v, mullo, carry, &*_it_v);
 				}
@@ -1244,15 +1481,15 @@ class uint_t {
 		}
 
 		// Get private value at index
-		const uint64_t& value(size_t idx) const {
-			static const uint64_t zero = 0;
+		const digit& value(size_t idx) const {
+			static const digit zero = 0;
 			return idx < size() ? *(begin() + idx) : zero;
 		}
 
 		// Get value of bit N
 		bool operator[](size_t n) const {
-			auto nd = n / 64;
-			auto nm = n % 64;
+			auto nd = n / digit_bits;
+			auto nm = n % digit_bits;
 			return nd < size() ? (*(begin() + nd) >> nm) & 1 : 0;
 		}
 
@@ -1260,8 +1497,8 @@ class uint_t {
 		size_t bits() const {
 			size_t out = 0;
 			if (size()) {
-				out = (size() - 1) * 64;
-				uint64_t ms = back();
+				out = (size() - 1) * digit_bits;
+				digit ms = back();
 				out += _bits(ms);
 			}
 			return out;
@@ -1290,17 +1527,17 @@ class uint_t {
 					}
 				}
 			} else if (sz && base == 256) {
-				auto value_size = sz / sizeof(uint64_t);
-				auto value_padding = sz % sizeof(uint64_t);
+				auto value_size = sz / digit_octets;
+				auto value_padding = sz % digit_octets;
 				if (value_padding) {
-					value_padding = sizeof(uint64_t) - value_padding;
+					value_padding = digit_octets - value_padding;
 					++value_size;
 				}
 				result.resize(value_size); // grow (no initialization)
 				*result.begin() = 0; // initialize value
 				auto ptr = reinterpret_cast<char*>(result.data());
 				std::copy(bytes, bytes + sz, ptr + value_padding);
-				std::reverse(ptr, ptr + value_size * sizeof(uint64_t));
+				std::reverse(ptr, ptr + value_size * digit_octets);
 			} else {
 				throw std::runtime_error("Error: Cannot convert from base " + std::to_string(base));
 			}
@@ -1317,21 +1554,21 @@ class uint_t {
 					auto bits = base_bits(base);
 					result.reserve(size() * base_size(base));
 					if (bits) {
-						uint64_t mask = base - 1;
+						digit mask = base - 1;
 						auto shift = 0;
-						auto ptr = reinterpret_cast<const uint32_t*>(data());
-						uint64_t num = *ptr++;
-						num <<= 32;
+						auto ptr = reinterpret_cast<const half_digit*>(data());
+						digit num = *ptr++;
+						num <<= half_digit_bits;
 						for (auto i = size() * 2 - 1; i; --i) {
-							num >>= 32;
-							num |= (static_cast<uint64_t>(*ptr++) << 32);
+							num >>= half_digit_bits;
+							num |= (static_cast<digit>(*ptr++) << half_digit_bits);
 							do {
 								result.push_back(chr(static_cast<int>((num >> shift) & mask)));
 								shift += bits;
-							} while (shift <= 32);
-							shift -= 32;
+							} while (shift <= half_digit_bits);
+							shift -= half_digit_bits;
 						}
-						num >>= (shift + 32);
+						num >>= (shift + half_digit_bits);
 						while (num) {
 							result.push_back(chr(static_cast<int>(num & mask)));
 							num >>= bits;
@@ -1353,7 +1590,7 @@ class uint_t {
 			} else if (base == 256) {
 				if (size()) {
 					auto ptr = reinterpret_cast<const char*>(data());
-					Result result(ptr, ptr + size() * sizeof(uint64_t));
+					Result result(ptr, ptr + size() * digit_octets);
 					auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c; });
 					result.resize(result.rend() - rit_f); // shrink
 					std::reverse(result.begin(), result.end());
