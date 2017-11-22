@@ -1853,13 +1853,11 @@ public:
 
 	// Get bitsize of value
 	size_t bits() const {
-		size_t out = 0;
-		if (size()) {
-			out = (size() - 1) * digit_bits;
-			digit ms = back();
-			out += _bits(ms);
+		auto sz = size();
+		if (sz) {
+			return _bits(back()) + (sz - 1) * digit_bits;
 		}
-		return out;
+		return 0;
 	}
 
 	static uint_t strtouint(const char* bytes, size_t sz, int base) {
