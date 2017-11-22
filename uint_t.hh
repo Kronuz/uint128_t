@@ -1410,14 +1410,14 @@ public:
 				digit _q;
 				auto _r = divrem(*(it_v_k + w_size), *(it_v_k + w_size - 1), wm1, &_q);
 				digit mullo = 0;
-				auto mulhi = mul(wm2, _q, &mullo);
+				auto mulhi = mul(_q, wm2, &mullo);
 				auto rlo = *(it_v_k + w_size - 2);
 				while (mulhi > _r || (mulhi == _r && mullo > rlo)) {
 					--_q;
-					auto _r2 = _r + wm1;
-					if (_r2 < _r) break;
-					_r = _r2;
-					mulhi = mul(wm2, _q, &mullo);
+					if (addcarry(_r, wm1, 0, &_r)) {
+						break;
+					}
+					mulhi = mul(_q, wm2, &mullo);
 				}
 
 				// D4. Multiply and subtract _q * w0[0:size_w] from vk[0:size_w+1]
