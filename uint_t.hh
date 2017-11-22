@@ -762,19 +762,22 @@ public:
 			auto rhs_sz = rhs.size();
 
 			auto rhs_it = rhs.begin();
-			size_t start = 0;
+			size_t shift = 0;
 
+			uint_t r;
 			while (rhs_sz > 0) {
 				// Multiply the next slice of rhs by lhs and add into result:
 				auto slice_size = std::min(lhs_sz, rhs_sz);
-				auto rhs_end = uint_t(std::vector<digit>(rhs_it, rhs_it + slice_size));
-				uint_t product;
-				karatsuba_mult(product, lhs, rhs_end, cutoff);
-				add(result, result, product, start);
-				start += slice_size;
+				auto rhs_slice = uint_t(std::vector<digit>(rhs_it, rhs_it + slice_size));
+				uint_t p;
+				karatsuba_mult(p, lhs, rhs_slice, cutoff);
+				add(r, r, p, shift, shift);
+				shift += slice_size;
 				rhs_sz -= slice_size;
 				rhs_it += slice_size;
 			}
+
+			result = std::move(r);
 		}
 
 		uint_t(const std::vector<digit>& value) :
@@ -1071,38 +1074,52 @@ public:
 		}
 
 		// Arithmetic Operators
-		static void long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+		static void long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 			auto lhs_sz = lhs.size();
 			auto rhs_sz = rhs.size();
 
-			if (lhs_sz > rhs_sz) {
-				// rhs should be the largest:
-				long_add(result, rhs, lhs, start);
-				return;
-			}
+			if (lhs_start > lhs_sz) lhs_start = lhs_sz;
+			if (rhs_start > rhs_sz) rhs_start = rhs_sz;
 
-			result.reserve(rhs_sz + 1);
-			result.resize(rhs_sz);
+			auto lhs_rsz = lhs_sz - lhs_start;
+			auto rhs_rsz = rhs_sz - rhs_start;
+			auto result_sz = std::max(lhs_rsz, rhs_rsz) + result_start;
+			result.reserve(result_sz + 1);
+			result.resize(result_sz, 0);
 
-			// not using end() because resize of result could have resized
-			// lhs or rhs if result is inplace.
-			auto lhs_it = lhs.begin() + std::min(start, lhs_sz);
+			// not using `end()` because resize of `result.resize()` could have
+			// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
+			auto lhs_it = lhs.begin() + lhs_start;
 			auto lhs_it_e = lhs.begin() + lhs_sz;
-			auto rhs_it = rhs.begin() + std::min(start, rhs_sz);
+			auto rhs_it = rhs.begin() + rhs_start;
 			auto rhs_it_e = rhs.begin() + rhs_sz;
 
-			auto it = result.begin();
+			auto it = result.begin() + result_start;
+			auto it_e = result.begin() + result_sz;
 
 			digit carry = 0;
-			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				carry = addcarry(*lhs_it, *rhs_it, carry, &*it);
+			if (lhs_rsz > rhs_rsz) {
+				for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+					assert(it != it_e);
+					assert(lhs_it != lhs_it_e);
+					carry = addcarry(*lhs_it, *rhs_it, carry, &*it);
+				}
+				for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+					assert(it != it_e);
+					carry = addcarry(*lhs_it, 0, carry, &*it);
+				}
+			} else {
+				for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+					assert(it != it_e);
+					assert(rhs_it != rhs_it_e);
+					carry = addcarry(*lhs_it, *rhs_it, carry, &*it);
+				}
+				for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+					assert(it != it_e);
+					carry = addcarry(0, *rhs_it, carry, &*it);
+				}
 			}
-			for (; carry && rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				carry = addcarry(0, *rhs_it, carry, &*it);
-			}
-			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				*it = *rhs_it;
-			}
+
 			if (carry) {
 				result.append(1);
 			}
@@ -1112,7 +1129,7 @@ public:
 			result.trim();
 		}
 
-		static void add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+		static void add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 			// First try saving some calculations:
 			if (!rhs) {
 				result = lhs;
@@ -1123,7 +1140,7 @@ public:
 				return;
 			}
 
-			long_add(result, lhs, rhs, start);
+			long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		}
 
 		uint_t operator+(const uint_t& rhs) const {
@@ -1137,47 +1154,66 @@ public:
 			return *this;
 		}
 
-		static void long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+		static void long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 			auto lhs_sz = lhs.size();
 			auto rhs_sz = rhs.size();
 
-			auto max_sz = std::max(lhs_sz, rhs_sz);
-			result.reserve(max_sz + 1);
-			result.resize(max_sz);
+			if (rhs_start > rhs_sz) rhs_start = rhs_sz;
+			if (lhs_start > lhs_sz) lhs_start = lhs_sz;
 
-			// not using end() because resize of result could have resized
-			// lhs or rhs if result is inplace.
-			auto lhs_it = lhs.begin() + std::min(start, lhs_sz);
+			auto lhs_rsz = lhs_sz - lhs_start;
+			auto rhs_rsz = rhs_sz - rhs_start;
+			auto result_sz = std::max(lhs_rsz, rhs_rsz) + result_start;
+			result.reserve(result_sz + 1);
+			result.resize(result_sz, 0);
+
+			// not using `end()` because resize of `result.resize()` could have
+			// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
+			auto lhs_it = lhs.begin() + lhs_start;
 			auto lhs_it_e = lhs.begin() + lhs_sz;
-			auto rhs_it = rhs.begin() + std::min(start, rhs_sz);
+			auto rhs_it = rhs.begin() + rhs_start;
 			auto rhs_it_e = rhs.begin() + rhs_sz;
 
-			auto it = result.begin();
+			auto it = result.begin() + result_start;
+			auto it_e = result.begin() + result_sz;
 
 			digit borrow = 0;
-			for (; lhs_it != lhs_it_e && rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				borrow = subborrow(*lhs_it, *rhs_it, borrow, &*it);
+			if (lhs_rsz > rhs_rsz) {
+				for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+					assert(it != it_e);
+					assert(lhs_it != lhs_it_e);
+					borrow = subborrow(*lhs_it, *rhs_it, borrow, &*it);
+				}
+				for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+					assert(it != it_e);
+					borrow = subborrow(*lhs_it, 0, borrow, &*it);
+				}
+			} else {
+				for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+					assert(it != it_e);
+					assert(rhs_it != rhs_it_e);
+					borrow = subborrow(*lhs_it, *rhs_it, borrow, &*it);
+				}
+				for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+					assert(it != it_e);
+					borrow = subborrow(0, *rhs_it, borrow, &*it);
+				}
 			}
-			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				borrow = subborrow(*lhs_it, 0, borrow, &*it);
-			}
-			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				borrow = subborrow(0, *rhs_it, borrow, &*it);
-			}
+
 			result._carry = borrow;
 
 			// Finish up
 			result.trim();
 		}
 
-		static void sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+		static void sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 			// First try saving some calculations:
 			if (!rhs) {
 				result = lhs;
 				return;
 			}
 
-			long_sub(result, lhs, rhs, start);
+			long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		}
 
 		uint_t operator-(const uint_t& rhs) const {
@@ -1294,20 +1330,21 @@ public:
 			karatsuba_mult(BD, B, D, cutoff);
 			uint_t AD_BC;
 			karatsuba_mult(AD_BC, (A + B), (C + D), cutoff);
-			AD_BC -= BD;
 			AD_BC -= AC;
+			AD_BC -= BD;
 
 			// Join the pieces, AC and BD (can't overlap) into BD:
-			result.grow(shift * 2 + AC.size());
-			result.append(BD);
-			result.resize(shift * 2, 0);
-			result.append(AC);
+			BD.reserve(shift * 2 + AC.size());
+			BD.resize(shift * 2, 0);
+			BD.append(AC);
 
 			// And add AD_BC to the middle: (AC           BD) + (    AD + BC    ):
-			add(result, result, AD_BC, shift);
+			add(BD, BD, AD_BC, shift, shift);
 
 			// Finish up
-			result.trim();
+			BD.trim();
+
+			result = std::move(BD);
 		}
 
 		static void mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
