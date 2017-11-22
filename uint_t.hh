@@ -139,6 +139,65 @@ private:
 	std::vector<digit> _value;
 	bool _carry;
 
+	class uint_view {
+		const size_t _begin;
+		const size_t _end;
+		const std::vector<digit>& _value;
+
+	public:
+		uint_view(const uint_view& o) :
+			_begin(o._begin),
+			_end(o._end),
+			_value(o._value) { }
+
+		uint_view(uint_view&& o) :
+			_begin(std::move(o._begin)),
+			_end(std::move(o._end)),
+			_value(std::move(o._value)) { }
+
+		uint_view(const uint_t& num) :
+			_begin(num._begin),
+			_end(0),
+			_value(num._value) { }
+
+		uint_view(const uint_t& num, size_t begin, size_t end) :
+			_begin(begin),
+			_end(end),
+			_value(num._value) { }
+
+		const digit* data() const noexcept {
+			return _value.data() + _begin;
+		}
+
+		size_t size() const noexcept {
+			return _end ? _end - _begin : _value.size() - _begin;
+		}
+
+		std::vector<digit>::const_iterator begin() const noexcept {
+			return _value.cbegin() + _begin;
+		}
+
+		std::vector<digit>::const_iterator end() const noexcept {
+			return _end ? _value.cbegin() + _end : _value.cend();
+		}
+
+		std::vector<digit>::const_reverse_iterator rbegin() const noexcept {
+			return _end ? std::vector<digit>::const_reverse_iterator(_value.cbegin() + _end) : _value.crbegin();
+		}
+
+		std::vector<digit>::const_reverse_iterator rend() const noexcept {
+			return std::vector<digit>::const_reverse_iterator(_value.cbegin() + _begin);
+		}
+
+		std::vector<digit>::const_reference front() const {
+			return *begin();
+		}
+
+		std::vector<digit>::const_reference back() const {
+			return *rbegin();
+		}
+	};
+
 	// vector window
 
 	size_t grow(size_t n) {
