@@ -122,17 +122,16 @@ namespace std {  // This is probably not a good idea
 }
 
 class uint_t {
-public:
-	using                   digit             = DIGIT_T;
-	using                   half_digit        = HALF_DIGIT_T;
+	private:
+		using                   digit             = DIGIT_T;
+		using                   half_digit        = HALF_DIGIT_T;
 
-    static constexpr size_t digit_octets      = sizeof(digit);          // number of octets per digit
-    static constexpr size_t digit_bits        = digit_octets * 8;       // number of bits per digit
-    static constexpr size_t half_digit_octets = sizeof(half_digit);     // number of octets per half_digit
-    static constexpr size_t half_digit_bits   = half_digit_octets * 8;  // number of bits per half_digit
-    static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
+		static constexpr size_t digit_octets      = sizeof(digit);          // number of octets per digit
+		static constexpr size_t digit_bits        = digit_octets * 8;       // number of bits per digit
+		static constexpr size_t half_digit_octets = sizeof(half_digit);     // number of octets per half_digit
+		static constexpr size_t half_digit_bits   = half_digit_octets * 8;  // number of bits per half_digit
+		static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
 
-	public:
 		static constexpr size_t karatsuba_cutoff = 1024 / digit_bits;
 		static constexpr double growth_factor = 1.5;
 
