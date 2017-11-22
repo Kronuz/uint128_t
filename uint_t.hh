@@ -178,6 +178,10 @@ public:
 			_value.insert(_value.end(), val.begin(), val.end());
 		}
 
+		void reserve(size_t sz) {
+			_value.reserve(sz + _shifts);
+		}
+
 		void resize(size_t sz) {
 			_value.resize(sz + _shifts);
 		}
@@ -616,6 +620,16 @@ public:
 			}
 		}
 
+		static const uint_t uint_0() {
+			static uint_t uint_0(0);
+			return uint_0;
+		}
+
+		static const uint_t uint_1() {
+			static uint_t uint_1(1);
+			return uint_1;
+		}
+
 		void trim(digit mask = 0) {
 			auto rit = rbegin();
 			auto rit_e = rend();
@@ -631,18 +645,18 @@ public:
 			resize(rit_e - rit_f); // shrink
 		}
 
-		ssize_t compare(const uint_t& rhs) const {
-			const auto& a = size();
-			const auto& b = rhs.size();
-			if (a != b) {
-				return a - b;
+		static ssize_t compare(const uint_t& lhs, const uint_t& rhs) {
+			auto lhs_sz = lhs.size();
+			auto rhs_sz = rhs.size();
+			if (lhs_sz != rhs_sz) {
+				return lhs_sz - rhs_sz;
 			}
-			auto rit = rbegin();
-			auto rit_e = rend();
+			auto lhs_rit = lhs.rbegin();
+			auto lhs_rit_e = lhs.rend();
 			auto rhs_rit = rhs.rbegin();
-			for (; rit != rit_e && *rit == *rhs_rit; ++rit, ++rhs_rit);
-			if (rit != rit_e) {
-				return *rit - *rhs_rit;
+			for (; lhs_rit != lhs_rit_e && *lhs_rit == *rhs_rit; ++lhs_rit, ++rhs_rit);
+			if (lhs_rit != lhs_rit_e) {
+				return *lhs_rit - *rhs_rit;
 			}
 			return 0;
 		}
@@ -743,26 +757,24 @@ public:
 		// Karatsuba would pay off *if* the inputs had balanced sizes.
 		// View rhs as a sequence of slices, each with lhs.size() digits,
 		// and multiply the slices by lhs, one at a time.
-		static uint_t karatsuba_lopsided_mult(const uint_t& lhs, const uint_t& rhs, size_t cutoff) {
-			const auto& lhs_sz = lhs.size();
+		static void karatsuba_lopsided_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff) {
+			auto lhs_sz = lhs.size();
 			auto rhs_sz = rhs.size();
 
-			uint_t result;
 			auto rhs_it = rhs.begin();
-			size_t shift = 0;
+			size_t start = 0;
 
 			while (rhs_sz > 0) {
 				// Multiply the next slice of rhs by lhs and add into result:
 				auto slice_size = std::min(lhs_sz, rhs_sz);
 				auto rhs_end = uint_t(std::vector<digit>(rhs_it, rhs_it + slice_size));
-				auto product = karatsuba_mult(lhs, rhs_end, cutoff);
-				result.add(product, shift);
-				shift += slice_size;
+				uint_t product;
+				karatsuba_mult(product, lhs, rhs_end, cutoff);
+				add(result, result, product, start);
+				start += slice_size;
 				rhs_sz -= slice_size;
 				rhs_it += slice_size;
 			}
-
-			return result;
 		}
 
 		uint_t(const std::vector<digit>& value) :
@@ -1035,123 +1047,161 @@ public:
 
 		// Comparison Operators
 		bool operator==(const uint_t& rhs) const {
-			return compare(rhs) == 0;
+			return compare(*this, rhs) == 0;
 		}
 
 		bool operator!=(const uint_t& rhs) const {
-			return compare(rhs) != 0;
+			return compare(*this, rhs) != 0;
 		}
 
 		bool operator>(const uint_t& rhs) const {
-			return compare(rhs) > 0;
+			return compare(*this, rhs) > 0;
 		}
 
 		bool operator<(const uint_t& rhs) const {
-			return compare(rhs) < 0;
+			return compare(*this, rhs) < 0;
 		}
 
 		bool operator>=(const uint_t& rhs) const {
-			return compare(rhs) >= 0;
+			return compare(*this, rhs) >= 0;
 		}
 
 		bool operator<=(const uint_t& rhs) const {
-			return compare(rhs) <= 0;
+			return compare(*this, rhs) <= 0;
 		}
 
 		// Arithmetic Operators
-		uint_t operator+(const uint_t& rhs) const {
-			uint_t result(*this);
-			result += rhs;
-			return result;
-		}
-
-		uint_t& add(const uint_t& rhs, size_t shift=0) {
-			// First try saving some calculations:
-			if (!rhs) {
-				return *this;
-			}
-			const auto& sz = size();
-			const auto& rhs_sz = rhs.size();
-			if (shift) {
-				shift = std::min(shift, sz);
-			}
-			if (sz < rhs_sz + shift) {
-				resize(rhs_sz + shift, 0); // grow
-			}
-			auto it = begin() + shift;
-			auto it_e = end();
-			auto rhs_it = rhs.begin();
-			auto rhs_it_e = rhs.end();
-			digit carry = 0;
-			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
-				carry = addcarry(*it, *rhs_it, carry, &*it);
-			}
-			for (; carry && it != it_e; ++it) {
-				carry = addcarry(*it, 0, carry, &*it);
-			}
-			if (carry) {
-				append(1);
-			}
-			_carry = false;
-			trim();
-			return *this;
-		}
-
-		uint_t& operator+=(const uint_t& rhs) {
-			return add(rhs, 0);
-		}
-
-		uint_t operator-(const uint_t& rhs) const {
-			uint_t result(*this);
-			result -= rhs;
-			return result;
-		}
-
-		uint_t& sub(const uint_t& rhs, size_t shift=0) {
-			// First try saving some calculations:
-			if (!rhs) {
-				return *this;
-			}
-			const auto& sz = size();
-			const auto& rhs_sz = rhs.size();
-			if (shift) {
-				shift = std::min(shift, sz);
-			}
-			if (sz < rhs_sz + shift) {
-				resize(rhs_sz + shift, 0); // grow
-			}
-			auto it = begin() + shift;
-			auto it_e = end();
-			auto rhs_it = rhs.begin();
-			auto rhs_it_e = rhs.end();
-			digit carry = 0;
-			for (; it != it_e && rhs_it != rhs_it_e; ++it, ++rhs_it) {
-				carry = subborrow(*it, *rhs_it, carry, &*it);
-			}
-			for (; carry && it != it_e; ++it) {
-				carry = subborrow(*it, 0, carry, &*it);
-			}
-			_carry = carry;
-
-			trim();
-			return *this;
-		}
-
-		uint_t& operator-=(const uint_t& rhs) {
-			return sub(rhs, 0);
-		}
-
-		// Long multiplication
-		static uint_t long_mult(const uint_t& lhs, const uint_t& rhs) {
-			const auto& lhs_sz = lhs.size();
-			const auto& rhs_sz = rhs.size();
+		static void long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+			auto lhs_sz = lhs.size();
+			auto rhs_sz = rhs.size();
 
 			if (lhs_sz > rhs_sz) {
 				// rhs should be the largest:
-				return long_mult(rhs, lhs);
+				long_add(result, rhs, lhs, start);
+				return;
 			}
 
+			result.reserve(rhs_sz + 1);
+			result.resize(rhs_sz);
+
+			// not using end() because resize of result could have resized
+			// lhs or rhs if result is inplace.
+			auto lhs_it = lhs.begin() + std::min(start, lhs_sz);
+			auto lhs_it_e = lhs.begin() + lhs_sz;
+			auto rhs_it = rhs.begin() + std::min(start, rhs_sz);
+			auto rhs_it_e = rhs.begin() + rhs_sz;
+
+			auto it = result.begin();
+
+			digit carry = 0;
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				carry = addcarry(*lhs_it, *rhs_it, carry, &*it);
+			}
+			for (; carry && rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				carry = addcarry(0, *rhs_it, carry, &*it);
+			}
+			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				*it = *rhs_it;
+			}
+			if (carry) {
+				result.append(1);
+			}
+			result._carry = false;
+
+			// Finish up
+			result.trim();
+		}
+
+		static void add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+			// First try saving some calculations:
+			if (!rhs) {
+				result = lhs;
+				return;
+			}
+			if (!lhs) {
+				result = rhs;
+				return;
+			}
+
+			long_add(result, lhs, rhs, start);
+		}
+
+		uint_t operator+(const uint_t& rhs) const {
 			uint_t result;
+			add(result, *this, rhs);
+			return result;
+		}
+
+		uint_t& operator+=(const uint_t& rhs) {
+			add(*this, *this, rhs);
+			return *this;
+		}
+
+		static void long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+			auto lhs_sz = lhs.size();
+			auto rhs_sz = rhs.size();
+
+			auto max_sz = std::max(lhs_sz, rhs_sz);
+			result.reserve(max_sz + 1);
+			result.resize(max_sz);
+
+			// not using end() because resize of result could have resized
+			// lhs or rhs if result is inplace.
+			auto lhs_it = lhs.begin() + std::min(start, lhs_sz);
+			auto lhs_it_e = lhs.begin() + lhs_sz;
+			auto rhs_it = rhs.begin() + std::min(start, rhs_sz);
+			auto rhs_it_e = rhs.begin() + rhs_sz;
+
+			auto it = result.begin();
+
+			digit borrow = 0;
+			for (; lhs_it != lhs_it_e && rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				borrow = subborrow(*lhs_it, *rhs_it, borrow, &*it);
+			}
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				borrow = subborrow(*lhs_it, 0, borrow, &*it);
+			}
+			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				borrow = subborrow(0, *rhs_it, borrow, &*it);
+			}
+			result._carry = borrow;
+
+			// Finish up
+			result.trim();
+		}
+
+		static void sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t start=0) {
+			// First try saving some calculations:
+			if (!rhs) {
+				result = lhs;
+				return;
+			}
+
+			long_sub(result, lhs, rhs, start);
+		}
+
+		uint_t operator-(const uint_t& rhs) const {
+			uint_t result;
+			sub(result, *this, rhs);
+			return result;
+		}
+
+		uint_t& operator-=(const uint_t& rhs) {
+			sub(*this, *this, rhs);
+			return *this;
+		}
+
+		// Long multiplication
+		static void long_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+			auto lhs_sz = lhs.size();
+			auto rhs_sz = rhs.size();
+
+			if (lhs_sz > rhs_sz) {
+				// rhs should be the largest:
+				long_mult(result, rhs, lhs);
+				return;
+			}
+
 			result.resize(rhs.size() + lhs.size(), 0);
 
 			auto it_lhs = lhs.begin();
@@ -1185,27 +1235,29 @@ public:
 
 			// Finish up
 			result.trim();
-			return result;
 		}
 
 		// Karatsuba multiplication
-		static uint_t karatsuba_mult(const uint_t& lhs, const uint_t& rhs, size_t cutoff = 1) {
-			const auto& lhs_sz = lhs.size();
-			const auto& rhs_sz = rhs.size();
+		static void karatsuba_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff = 1) {
+			auto lhs_sz = lhs.size();
+			auto rhs_sz = rhs.size();
 
 			if (lhs_sz > rhs_sz) {
 				// rhs should be the largest:
-				return karatsuba_mult(rhs, lhs, cutoff);
+				karatsuba_mult(result, rhs, lhs, cutoff);
+				return;
 			}
 
 			if (lhs_sz <= cutoff) {
-				return long_mult(lhs, rhs);
+				long_mult(result, lhs, rhs);
+				return;
 			}
 
 			// If a is too small compared to b, splitting on b gives a degenerate case
 			// in which Karatsuba may be (even much) less efficient than long multiplication.
 			if (2 * lhs_sz <= rhs_sz) {
-				return karatsuba_lopsided_mult(lhs, rhs, cutoff);
+				karatsuba_lopsided_mult(result, lhs, rhs, cutoff);
+				return;
 			}
 
 			// Karatsuba:
@@ -1236,60 +1288,62 @@ public:
 			auto& D = rhs_pair.first;  // lo
 
 			// Get the pieces:
-			auto AC = karatsuba_mult(A, C, cutoff);
-			auto BD = karatsuba_mult(B, D, cutoff);
-			auto AD_BC = karatsuba_mult((A + B), (C + D), cutoff) - AC - BD;
+			uint_t AC;
+			karatsuba_mult(AC, A, C, cutoff);
+			uint_t BD;
+			karatsuba_mult(BD, B, D, cutoff);
+			uint_t AD_BC;
+			karatsuba_mult(AD_BC, (A + B), (C + D), cutoff);
+			AD_BC -= BD;
+			AD_BC -= AC;
 
 			// Join the pieces, AC and BD (can't overlap) into BD:
-			BD.grow(shift * 2 + AC.size());
-			BD.resize(shift * 2, 0);
-			BD.append(AC);
+			result.grow(shift * 2 + AC.size());
+			result.append(BD);
+			result.resize(shift * 2, 0);
+			result.append(AC);
 
 			// And add AD_BC to the middle: (AC           BD) + (    AD + BC    ):
-			BD.add(AD_BC, shift);
+			add(result, result, AD_BC, shift);
 
 			// Finish up
-			BD.trim();
-			return BD;
+			result.trim();
 		}
 
-		static uint_t mult(const uint_t& lhs, const uint_t& rhs) {
+		static void mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!lhs || !rhs) {
-				return uint_0();
+				result = uint_0();
+				return;
 			}
 			if (lhs == uint_1()) {
-				return rhs;
+				result = rhs;
+				return;
 			}
 			if (rhs == uint_1()) {
-				return lhs;
+				result = lhs;
+				return;
 			}
 
-			return karatsuba_mult(lhs, rhs, karatsuba_cutoff);
+			karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
 		}
 
 		uint_t operator*(const uint_t& rhs) const {
-			return mult(*this, rhs);
+			uint_t result;
+			mult(result, *this, rhs);
+			return result;
 		}
 
 		uint_t& operator*=(const uint_t& rhs) {
-			*this = *this * rhs;
+			uint_t result;
+			mult(result, *this, rhs);
+			*this = std::move(result);
 			return *this;
-		}
-
-		static const uint_t uint_0() {
-			static uint_t uint_0(0);
-			return uint_0;
-		}
-
-		static const uint_t uint_1() {
-			static uint_t uint_1(1);
-			return uint_1;
 		}
 
 		// Single word division
 		// Fastests, but ONLY for single sized rhs
-		static std::pair<uint_t, uint_t> single_divmod(const uint_t& lhs, const uint_t& rhs) {
+		static void single_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 			assert(rhs.size() == 1);
 			auto n = rhs.front();
 
@@ -1307,11 +1361,12 @@ public:
 
 			q.trim();
 
-			return std::make_pair(q, uint_t(r));
+			quotient = std::move(q);
+			remainder = r;
 		}
 
 		// Implementation of Knuth's Algorithm D
-		static std::pair<uint_t, uint_t> knuth_divmod(const uint_t& lhs, const uint_t& rhs) {
+		static void knuth_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 			auto v = lhs;
 			auto w = rhs;
 
@@ -1401,51 +1456,73 @@ public:
 			q.trim();
 			v.trim();
 
-			return std::make_pair(q, v);
+			quotient = std::move(q);
+			remainder = std::move(v);
 		}
 
-		static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
+		static void divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 			// First try saving some calculations:
 			if (!rhs) {
 				throw std::domain_error("Error: division or modulus by 0");
 			}
 			if (lhs.size() - rhs.size() == 0) {
 				// Fast division and modulo for single value
-				const auto& a = *lhs.begin();
-				const auto& b = *rhs.begin();
-				return std::make_pair(uint_t(a / b), uint_t(a % b));
+				auto a = *lhs.begin();
+				auto b = *rhs.begin();
+				quotient = a / b;
+				remainder = a % b;
+				return;
 			}
 			if (rhs == uint_1()) {
-				return std::make_pair(lhs, uint_0());
+				quotient = lhs;
+				remainder = uint_0();
+				return;
 			}
 			if (lhs == rhs) {
-				return std::make_pair(uint_1(), uint_0());
+				quotient = uint_1();
+				remainder = uint_0();
+				return;
 			}
 			if (!lhs || lhs < rhs) {
-				return std::make_pair(uint_0(), lhs);
+				quotient = uint_0();
+				remainder = lhs;
+				return;
 			}
 			if (rhs.size() == 1) {
-				return single_divmod(lhs, rhs);
+				single_divmod(quotient, remainder, lhs, rhs);
+				return;
 			}
 
-			return knuth_divmod(lhs, rhs);
+			knuth_divmod(quotient, remainder, lhs, rhs);
 		}
 
 		uint_t operator/(const uint_t& rhs) const {
-			return divmod(*this, rhs).first;
+			uint_t quotient;
+			uint_t remainder;
+			divmod(quotient, remainder, *this, rhs);
+			return quotient;
 		}
 
 		uint_t& operator/=(const uint_t& rhs) {
-			*this = *this / rhs;
+			uint_t quotient;
+			uint_t remainder;
+			divmod(quotient, remainder, *this, rhs);
+			*this = std::move(quotient);
 			return *this;
 		}
 
 		uint_t operator%(const uint_t& rhs) const {
-			return divmod(*this, rhs).second;
+			uint_t quotient;
+			uint_t remainder;
+			divmod(quotient, remainder, *this, rhs);
+			return remainder;
 		}
 
 		uint_t& operator%=(const uint_t& rhs) {
-			*this = *this % rhs;
+			uint_t quotient;
+			uint_t remainder;
+			divmod(quotient, remainder, *this, rhs);
+			*this = std::move(remainder);
 			return *this;
 		}
 
@@ -1575,11 +1652,12 @@ public:
 						auto rit_f = std::find_if(result.rbegin(), result.rend(), [](const char& c) { return c != '0'; });
 						result.resize(result.rend() - rit_f); // shrink
 					} else {
-						std::pair<uint_t, uint_t> qr(*this, uint_0());
+						uint_t quotient = *this;
+						uint_t remainder = uint_0();
 						do {
-							qr = divmod(qr.first, base);
-							result.push_back(chr(static_cast<int>(qr.second)));
-						} while (qr.first);
+							divmod(quotient, remainder, quotient, base);
+							result.push_back(chr(static_cast<int>(remainder)));
+						} while (quotient);
 					}
 					std::reverse(result.begin(), result.end());
 				} else {
