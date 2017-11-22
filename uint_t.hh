@@ -140,6 +140,8 @@ private:
 	bool _carry;
 
 	class uint_view {
+		friend uint_t;
+
 		const size_t _begin;
 		const size_t _end;
 		const std::vector<digit>& _value;
@@ -155,15 +157,20 @@ private:
 			_end(std::move(o._end)),
 			_value(std::move(o._value)) { }
 
+		uint_view(const uint_view& num, size_t begin, size_t end) :
+			_begin(begin),
+			_end(end),
+			_value(num._value) { }
+
 		uint_view(const uint_t& num) :
 			_begin(num._begin),
 			_end(0),
 			_value(num._value) { }
 
-		uint_view(const uint_t& num, size_t begin, size_t end) :
-			_begin(begin),
-			_end(end),
-			_value(num._value) { }
+	private:
+		explicit operator bool() const {
+			return static_cast<bool>(size());
+		}
 
 		const digit* data() const noexcept {
 			return _value.data() + _begin;
@@ -195,6 +202,14 @@ private:
 
 		std::vector<digit>::const_reference back() const {
 			return *rbegin();
+		}
+
+		size_t bits() const {
+			auto sz = size();
+			if (sz) {
+				return _bits(back()) + (sz - 1) * digit_bits;
+			}
+			return 0;
 		}
 	};
 
@@ -230,8 +245,8 @@ private:
 		_value.push_back(val);
 	}
 
-	void append(const uint_t& val) {
-		grow(_value.size() + val.end() - val.begin());
+	void append(const uint_view& val) {
+		grow(_value.size() + val.size());
 		_value.insert(_value.end(), val.begin(), val.end());
 	}
 
@@ -702,22 +717,6 @@ private:
 		resize(rit_e - rit_f); // shrink
 	}
 
-	static ssize_t compare(const uint_t& lhs, const uint_t& rhs) {
-		auto lhs_sz = lhs.size();
-		auto rhs_sz = rhs.size();
-		if (lhs_sz != rhs_sz) {
-			return lhs_sz - rhs_sz;
-		}
-		auto lhs_rit = lhs.rbegin();
-		auto lhs_rit_e = lhs.rend();
-		auto rhs_rit = rhs.rbegin();
-		for (; lhs_rit != lhs_rit_e && *lhs_rit == *rhs_rit; ++lhs_rit, ++rhs_rit);
-		if (lhs_rit != lhs_rit_e) {
-			return *lhs_rit - *rhs_rit;
-		}
-		return 0;
-	}
-
 	static const uint8_t& base_bits(int base) {
 		static const uint8_t _[256] = {
 			0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4,
@@ -769,9 +768,9 @@ private:
 		return _[base - 1];
 	}
 
-	static const uint8_t& ord(int chr) {
+	static const uint_t& ord(int chr) {
 		// 0123456789abcdefghijklmnopqrstuvwxyz -> (0 - 35)
-		static const uint8_t _[256] = {
+		static const uint_t _[256] = {
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -801,12 +800,10 @@ private:
 	}
 
 	// A helper for Karatsuba multiplication to split a number in two, at n.
-	static std::pair<uint_t, uint_t> karatsuba_mult_split(const uint_t& num, size_t n) {
-		auto it = num.begin();
-		auto it_split = it + std::min(num.size(), n);
+	static std::pair<const uint_view, const uint_view> karatsuba_mult_split(const uint_view& num, size_t n) {
 		return std::make_pair(
-			uint_t(std::vector<digit>(it, it_split)),
-			uint_t(std::vector<digit>(it_split, num.end()))
+			uint_view(num, num._begin, num._begin + n),
+			uint_view(num, num._begin + n, num._end)
 		);
 	}
 
@@ -814,24 +811,24 @@ private:
 	// Karatsuba would pay off *if* the inputs had balanced sizes.
 	// View rhs as a sequence of slices, each with lhs.size() digits,
 	// and multiply the slices by lhs, one at a time.
-	static void karatsuba_lopsided_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff) {
+	static void karatsuba_lopsided_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
-		auto rhs_it = rhs.begin();
+		auto rhs_begin = rhs._begin;
 		size_t shift = 0;
 
 		uint_t r;
 		while (rhs_sz > 0) {
 			// Multiply the next slice of rhs by lhs and add into result:
 			auto slice_size = std::min(lhs_sz, rhs_sz);
-			auto rhs_slice = uint_t(std::vector<digit>(rhs_it, rhs_it + slice_size));
+			const uint_view rhs_slice(rhs, rhs_begin, rhs_begin + slice_size);
 			uint_t p;
 			karatsuba_mult(p, lhs, rhs_slice, cutoff);
 			add(r, r, p, shift, shift);
 			shift += slice_size;
 			rhs_sz -= slice_size;
-			rhs_it += slice_size;
+			rhs_begin += slice_size;
 		}
 
 		result = std::move(r);
@@ -859,6 +856,11 @@ public:
 		_begin(std::move(o._begin)),
 		_value(std::move(o._value)),
 		_carry(std::move(o._carry)) { }
+
+	explicit uint_t(const uint_view& o) :
+		_begin(0),
+		_value(o.begin(), o.end()),
+		_carry(false) { }
 
 	template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 	uint_t(const T& value) :
@@ -908,6 +910,12 @@ public:
 		return *this;
 	}
 
+	uint_t& operator=(const uint_view& o) {
+		_begin = o._begin;
+		_value = o._value;
+		return *this;
+	}
+
 	// Typecast Operators
 	explicit operator bool() const {
 		return static_cast<bool>(size());
@@ -944,7 +952,7 @@ public:
 	}
 
 	// Bitwise Operators
-	static void bitwise_and(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static void bitwise_and(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -987,18 +995,18 @@ public:
 		result.trim();
 	}
 
-	uint_t operator&(const uint_t& rhs) const {
+	uint_t operator&(const uint_view& rhs) const {
 		uint_t result;
 		bitwise_and(result, *this, rhs);
 		return result;
 	}
 
-	uint_t& operator&=(const uint_t& rhs) {
+	uint_t& operator&=(const uint_view& rhs) {
 		bitwise_and(*this, *this, rhs);
 		return *this;
 	}
 
-	static void bitwise_or(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static void bitwise_or(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1041,18 +1049,18 @@ public:
 		result.trim();
 	}
 
-	uint_t operator|(const uint_t& rhs) const {
+	uint_t operator|(const uint_view& rhs) const {
 		uint_t result;
 		bitwise_or(result, *this, rhs);
 		return result;
 	}
 
-	uint_t& operator|=(const uint_t& rhs) {
+	uint_t& operator|=(const uint_view& rhs) {
 		bitwise_or(*this, *this, rhs);
 		return *this;
 	}
 
-	static void bitwise_xor(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static void bitwise_xor(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1095,18 +1103,18 @@ public:
 		result.trim();
 	}
 
-	uint_t operator^(const uint_t& rhs) const {
+	uint_t operator^(const uint_view& rhs) const {
 		uint_t result;
 		bitwise_xor(result, *this, rhs);
 		return result;
 	}
 
-	uint_t& operator^=(const uint_t& rhs) {
+	uint_t& operator^=(const uint_view& rhs) {
 		bitwise_xor(*this, *this, rhs);
 		return *this;
 	}
 
-	static void bitwise_inv(uint_t& result, const uint_t& lhs) {
+	static void bitwise_inv(uint_t& result, const uint_view& lhs) {
 		auto lhs_sz = lhs.size();
 
 		auto b = lhs.bits();
@@ -1143,7 +1151,7 @@ public:
 	}
 
 	// Bit Shift Operators
-	static void bitwise_lshift(uint_t& lhs, const uint_t& rhs) {
+	static void bitwise_lshift(uint_t& lhs, const uint_view& rhs) {
 		if (!rhs) {
 			return;
 		}
@@ -1151,7 +1159,8 @@ public:
 		uint_t shifts_q;
 		uint_t shifts_r;
 		auto _digit_bits = digit_bits;
-		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		auto uint_digit_bits = uint_t(_digit_bits);
+		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
 		size_t shifts = static_cast<size_t>(shifts_q);
 		size_t shift = static_cast<size_t>(shifts_r);
 
@@ -1164,7 +1173,7 @@ public:
 			auto lhs_it_e = lhs.end();
 			for (; lhs_it != lhs_it_e; ++lhs_it) {
 				auto v = (*lhs_it << shift) | shifted;
-				shifted = *lhs_it >> (digit_bits - shift);
+				shifted = *lhs_it >> (_digit_bits - shift);
 				*lhs_it = v;
 			}
 			if (shifted) {
@@ -1176,8 +1185,8 @@ public:
 		lhs.trim();
 	}
 
-	static void bitwise_lshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
-		if (&result == &lhs) {
+	static void bitwise_lshift(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
+		if (&result._value == &lhs._value) {
 			bitwise_lshift(result, rhs);
 			return;
 		}
@@ -1191,7 +1200,8 @@ public:
 		uint_t shifts_q;
 		uint_t shifts_r;
 		auto _digit_bits = digit_bits;
-		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		auto uint_digit_bits = uint_t(_digit_bits);
+		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
 		size_t shifts = static_cast<size_t>(shifts_q);
 		size_t shift = static_cast<size_t>(shifts_r);
 
@@ -1212,7 +1222,7 @@ public:
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
 				assert(it != it_e);
 				auto v = (*lhs_it << shift) | shifted;
-				shifted = *lhs_it >> (digit_bits - shift);
+				shifted = *lhs_it >> (_digit_bits - shift);
 				*it = v;
 			}
 			if (shifted) {
@@ -1229,33 +1239,43 @@ public:
 		result.trim();
 	}
 
+	uint_t operator<<(const uint_view& rhs) const {
+		uint_t result;
+		bitwise_lshift(result, *this, rhs);
+		return result;
+	}
 	uint_t operator<<(const uint_t& rhs) const {
 		uint_t result;
 		bitwise_lshift(result, *this, rhs);
 		return result;
 	}
 
+	uint_t& operator<<=(const uint_view& rhs) {
+		bitwise_lshift(*this, rhs);
+		return *this;
+	}
 	uint_t& operator<<=(const uint_t& rhs) {
 		bitwise_lshift(*this, rhs);
 		return *this;
 	}
 
-	static void bitwise_rshift(uint_t& lhs, const uint_t& rhs) {
+	static void bitwise_rshift(uint_t& lhs, const uint_view& rhs) {
 		if (!rhs) {
 			return;
 		}
 
 		auto lhs_sz = lhs.size();
 
-		if (rhs >= lhs_sz * digit_bits) {
+		auto _digit_bits = digit_bits;
+		if (compare(rhs, uint_t(lhs_sz * _digit_bits)) >= 0) {
 			lhs = uint_0();
 			return;
 		}
 
 		uint_t shifts_q;
 		uint_t shifts_r;
-		auto _digit_bits = digit_bits;
-		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		auto uint_digit_bits = uint_t(_digit_bits);
+		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
 		size_t shifts = static_cast<size_t>(shifts_q);
 		size_t shift = static_cast<size_t>(shifts_r);
 
@@ -1268,15 +1288,15 @@ public:
 			auto lhs_rit_e = lhs.rend();
 			for (; lhs_rit != lhs_rit_e; ++lhs_rit) {
 				auto v = (*lhs_rit >> shift) | shifted;
-				shifted = *lhs_rit << (digit_bits - shift);
+				shifted = *lhs_rit << (_digit_bits - shift);
 				*lhs_rit = v;
 			}
 			lhs.trim();
 		}
 	}
 
-	static void bitwise_rshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
-		if (&result == &lhs) {
+	static void bitwise_rshift(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
+		if (&result._value == &lhs._value) {
 			bitwise_lshift(result, rhs);
 			return;
 		}
@@ -1287,15 +1307,16 @@ public:
 
 		auto lhs_sz = lhs.size();
 
-		if (rhs >= lhs_sz * digit_bits) {
+		auto _digit_bits = digit_bits;
+		if (compare(rhs, uint_t(lhs_sz * _digit_bits)) >= 0) {
 			result = uint_0();
 			return;
 		}
 
 		uint_t shifts_q;
 		uint_t shifts_r;
-		auto _digit_bits = digit_bits;
-		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		auto uint_digit_bits = uint_t(_digit_bits);
+		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
 		size_t shifts = static_cast<size_t>(shifts_q);
 		size_t shift = static_cast<size_t>(shifts_r);
 
@@ -1314,7 +1335,7 @@ public:
 			for (; lhs_rit != lhs_rit_e; ++lhs_rit, ++rit) {
 				assert(rit != rit_e);
 				auto v = (*lhs_rit >> shift) | shifted;
-				shifted = *lhs_rit << (digit_bits - shift);
+				shifted = *lhs_rit << (_digit_bits - shift);
 				*rit = v;
 			}
 		} else {
@@ -1328,12 +1349,21 @@ public:
 		result.trim();
 	}
 
+	uint_t operator>>(const uint_view& rhs) const {
+		uint_t result;
+		bitwise_rshift(result, *this, rhs);
+		return result;
+	}
 	uint_t operator>>(const uint_t& rhs) const {
 		uint_t result;
 		bitwise_rshift(result, *this, rhs);
 		return result;
 	}
 
+	uint_t& operator>>=(const uint_view& rhs) {
+		bitwise_rshift(*this, rhs);
+		return *this;
+	}
 	uint_t& operator>>=(const uint_t& rhs) {
 		bitwise_rshift(*this, rhs);
 		return *this;
@@ -1344,41 +1374,81 @@ public:
 		return !static_cast<bool>(*this);
 	}
 
+	bool operator&&(const uint_view& rhs) const {
+		return static_cast<bool>(*this) && rhs;
+	}
 	bool operator&&(const uint_t& rhs) const {
 		return static_cast<bool>(*this) && rhs;
 	}
 
+	bool operator||(const uint_view& rhs) const {
+		return static_cast<bool>(*this) || rhs;
+	}
 	bool operator||(const uint_t& rhs) const {
 		return static_cast<bool>(*this) || rhs;
 	}
 
 	// Comparison Operators
+	static ssize_t compare(const uint_view& lhs, const uint_view& rhs) {
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+		if (lhs_sz != rhs_sz) {
+			return lhs_sz - rhs_sz;
+		}
+		auto lhs_rit = lhs.rbegin();
+		auto lhs_rit_e = lhs.rend();
+		auto rhs_rit = rhs.rbegin();
+		for (; lhs_rit != lhs_rit_e && *lhs_rit == *rhs_rit; ++lhs_rit, ++rhs_rit);
+		if (lhs_rit != lhs_rit_e) {
+			return *lhs_rit - *rhs_rit;
+		}
+		return 0;
+	}
+
+	bool operator==(const uint_view& rhs) const {
+		return compare(*this, rhs) == 0;
+	}
 	bool operator==(const uint_t& rhs) const {
 		return compare(*this, rhs) == 0;
 	}
 
+	bool operator!=(const uint_view& rhs) const {
+		return compare(*this, rhs) != 0;
+	}
 	bool operator!=(const uint_t& rhs) const {
 		return compare(*this, rhs) != 0;
 	}
 
+	bool operator>(const uint_view& rhs) const {
+		return compare(*this, rhs) > 0;
+	}
 	bool operator>(const uint_t& rhs) const {
 		return compare(*this, rhs) > 0;
 	}
 
+	bool operator<(const uint_view& rhs) const {
+		return compare(*this, rhs) < 0;
+	}
 	bool operator<(const uint_t& rhs) const {
 		return compare(*this, rhs) < 0;
 	}
 
+	bool operator>=(const uint_view& rhs) const {
+		return compare(*this, rhs) >= 0;
+	}
 	bool operator>=(const uint_t& rhs) const {
 		return compare(*this, rhs) >= 0;
 	}
 
+	bool operator<=(const uint_view& rhs) const {
+		return compare(*this, rhs) <= 0;
+	}
 	bool operator<=(const uint_t& rhs) const {
 		return compare(*this, rhs) <= 0;
 	}
 
 	// Arithmetic Operators
-	static void long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static void long_add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1433,7 +1503,7 @@ public:
 		result.trim();
 	}
 
-	static void add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static void add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
@@ -1447,18 +1517,27 @@ public:
 		long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
+	uint_t operator+(const uint_view& rhs) const {
+		uint_t result;
+		add(result, *this, rhs);
+		return result;
+	}
 	uint_t operator+(const uint_t& rhs) const {
 		uint_t result;
 		add(result, *this, rhs);
 		return result;
 	}
 
+	uint_t& operator+=(const uint_view& rhs) {
+		add(*this, *this, rhs);
+		return *this;
+	}
 	uint_t& operator+=(const uint_t& rhs) {
 		add(*this, *this, rhs);
 		return *this;
 	}
 
-	static void long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static void long_sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1510,7 +1589,7 @@ public:
 		result.trim();
 	}
 
-	static void sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static void sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
@@ -1520,19 +1599,28 @@ public:
 		long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
+	uint_t operator-(const uint_view& rhs) const {
+		uint_t result;
+		sub(result, *this, rhs);
+		return result;
+	}
 	uint_t operator-(const uint_t& rhs) const {
 		uint_t result;
 		sub(result, *this, rhs);
 		return result;
 	}
 
+	uint_t& operator-=(const uint_view& rhs) {
+		sub(*this, *this, rhs);
+		return *this;
+	}
 	uint_t& operator-=(const uint_t& rhs) {
 		sub(*this, *this, rhs);
 		return *this;
 	}
 
 	// Long multiplication
-	static void long_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static void long_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1578,7 +1666,7 @@ public:
 	}
 
 	// Karatsuba multiplication
-	static void karatsuba_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff = 1) {
+	static void karatsuba_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff = 1) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1618,22 +1706,22 @@ public:
 		auto shift = rhs_sz >> 1;
 
 		// Split to get A and B:
-		auto lhs_pair = karatsuba_mult_split(lhs, shift);
-		auto& A = lhs_pair.second; // hi
-		auto& B = lhs_pair.first;  // lo
+		const auto lhs_pair = karatsuba_mult_split(lhs, shift);
+		const auto& A = lhs_pair.second; // hi
+		const auto& B = lhs_pair.first;  // lo
 
 		// Split to get C and D:
-		auto rhs_pair = karatsuba_mult_split(rhs, shift);
-		auto& C = rhs_pair.second; // hi
-		auto& D = rhs_pair.first;  // lo
+		const auto rhs_pair = karatsuba_mult_split(rhs, shift);
+		const auto& C = rhs_pair.second; // hi
+		const auto& D = rhs_pair.first;  // lo
 
 		// Get the pieces:
 		uint_t AC;
 		karatsuba_mult(AC, A, C, cutoff);
 		uint_t BD;
 		karatsuba_mult(BD, B, D, cutoff);
-		uint_t AD_BC;
-		karatsuba_mult(AD_BC, (A + B), (C + D), cutoff);
+		uint_t AD_BC, AB, CD;
+		karatsuba_mult(AD_BC, add(AB, A, B), add(CD, C, D), cutoff);
 		AD_BC -= AC;
 		AD_BC -= BD;
 
@@ -1651,17 +1739,17 @@ public:
 		result = std::move(BD);
 	}
 
-	static void mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static void mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		// First try saving some calculations:
 		if (!lhs || !rhs) {
 			result = uint_0();
 			return;
 		}
-		if (lhs == uint_1()) {
+		if (!compare(lhs, uint_1())) {
 			result = rhs;
 			return;
 		}
-		if (rhs == uint_1()) {
+		if (!compare(rhs, uint_1())) {
 			result = lhs;
 			return;
 		}
@@ -1669,12 +1757,23 @@ public:
 		karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
 	}
 
+	uint_t operator*(const uint_view& rhs) const {
+		uint_t result;
+		mult(result, *this, rhs);
+		return result;
+	}
 	uint_t operator*(const uint_t& rhs) const {
 		uint_t result;
 		mult(result, *this, rhs);
 		return result;
 	}
 
+	uint_t& operator*=(const uint_view& rhs) {
+		uint_t result;
+		mult(result, *this, rhs);
+		*this = std::move(result);
+		return *this;
+	}
 	uint_t& operator*=(const uint_t& rhs) {
 		uint_t result;
 		mult(result, *this, rhs);
@@ -1684,7 +1783,7 @@ public:
 
 	// Single word division
 	// Fastests, but ONLY for single sized rhs
-	static void single_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
+	static void single_divmod(uint_t& quotient, uint_t& remainder, const uint_view& lhs, const uint_view& rhs) {
 		assert(rhs.size() == 1);
 		auto n = rhs.front();
 
@@ -1707,9 +1806,9 @@ public:
 	}
 
 	// Implementation of Knuth's Algorithm D
-	static void knuth_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
-		auto v = lhs;
-		auto w = rhs;
+	static void knuth_divmod(uint_t& quotient, uint_t& remainder, const uint_view& lhs, const uint_view& rhs) {
+		uint_t v(lhs);
+		uint_t w(rhs);
 
 		auto v_size = v.size();
 		auto w_size = w.size();
@@ -1717,7 +1816,7 @@ public:
 
 		// D1. normalize: shift rhs left so that its top digit is >= 63 bits.
 		// shift lhs left by the same amount. Results go into w and v.
-		auto d = digit_bits - _bits(w.back());
+		auto d = uint_t(digit_bits - _bits(w.back()));
 		v <<= d;
 		w <<= d;
 
@@ -1801,12 +1900,14 @@ public:
 		remainder = std::move(v);
 	}
 
-	static void divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
+	static void divmod(uint_t& quotient, uint_t& remainder, const uint_view& lhs, const uint_view& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			throw std::domain_error("Error: division or modulus by 0");
 		}
-		if (lhs.size() - rhs.size() == 0) {
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+		if (lhs_sz - rhs_sz == 0) {
 			// Fast division and modulo for single value
 			auto a = *lhs.begin();
 			auto b = *rhs.begin();
@@ -1814,22 +1915,23 @@ public:
 			remainder = a % b;
 			return;
 		}
-		if (rhs == uint_1()) {
+		if (!compare(rhs, uint_1())) {
 			quotient = lhs;
 			remainder = uint_0();
 			return;
 		}
-		if (lhs == rhs) {
+		auto compared = compare(lhs, rhs);
+		if (!compared) {
 			quotient = uint_1();
 			remainder = uint_0();
 			return;
 		}
-		if (!lhs || lhs < rhs) {
+		if (!lhs || compared < 0) {
 			quotient = uint_0();
 			remainder = lhs;
 			return;
 		}
-		if (rhs.size() == 1) {
+		if (rhs_sz == 1) {
 			single_divmod(quotient, remainder, lhs, rhs);
 			return;
 		}
@@ -1837,6 +1939,12 @@ public:
 		knuth_divmod(quotient, remainder, lhs, rhs);
 	}
 
+	uint_t operator/(const uint_view& rhs) const {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		return quotient;
+	}
 	uint_t operator/(const uint_t& rhs) const {
 		uint_t quotient;
 		uint_t remainder;
@@ -1844,6 +1952,13 @@ public:
 		return quotient;
 	}
 
+	uint_t& operator/=(const uint_view& rhs) {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		*this = std::move(quotient);
+		return *this;
+	}
 	uint_t& operator/=(const uint_t& rhs) {
 		uint_t quotient;
 		uint_t remainder;
@@ -1852,6 +1967,12 @@ public:
 		return *this;
 	}
 
+	uint_t operator%(const uint_view& rhs) const {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		return remainder;
+	}
 	uint_t operator%(const uint_t& rhs) const {
 		uint_t quotient;
 		uint_t remainder;
@@ -1859,6 +1980,13 @@ public:
 		return remainder;
 	}
 
+	uint_t& operator%=(const uint_view& rhs) {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		*this = std::move(remainder);
+		return *this;
+	}
 	uint_t& operator%=(const uint_t& rhs) {
 		uint_t quotient;
 		uint_t remainder;
@@ -1993,8 +2121,9 @@ public:
 				} else {
 					uint_t quotient = *this;
 					uint_t remainder = uint_0();
+					uint_t uint_base = base;
 					do {
-						divmod(quotient, remainder, quotient, base);
+						divmod(quotient, remainder, quotient, uint_base);
 						result.push_back(chr(static_cast<int>(remainder)));
 					} while (quotient);
 				}
@@ -2058,7 +2187,9 @@ namespace std {  // This is probably not a good idea
 // Bitwise Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator&(const T& lhs, const uint_t& rhs) {
-	return rhs & lhs;
+	uint_t result;
+	uint_t::bitwise_and(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2068,7 +2199,9 @@ T& operator&=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator|(const T& lhs, const uint_t& rhs) {
-	return rhs | lhs;
+	uint_t result;
+	uint_t::bitwise_or(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2078,7 +2211,9 @@ T& operator|=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator^(const T& lhs, const uint_t& rhs) {
-	return rhs ^ lhs;
+	uint_t result;
+	uint_t::bitwise_xor(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2087,107 +2222,67 @@ T& operator^=(T& lhs, const uint_t& rhs) {
 }
 
 // Bitshift operators
-inline uint_t operator<<(const bool     & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const uint8_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const uint16_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const uint32_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const uint64_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const int8_t   & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const int16_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const int32_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
-}
-inline uint_t operator<<(const int64_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) << rhs;
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+inline uint_t operator<<(T& lhs, const uint_t& rhs) {
+	uint_t result;
+	uint_t::bitwise_lshift(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T& operator<<=(T& lhs, const uint_t& rhs) {
-	return lhs = static_cast<T>(uint_t(lhs) << rhs);
+	return lhs = static_cast<T>(lhs << rhs);
 }
 
-inline uint_t operator>>(const bool     & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const uint8_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const uint16_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const uint32_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const uint64_t & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const int8_t   & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const int16_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const int32_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
-}
-inline uint_t operator>>(const int64_t  & lhs, const uint_t& rhs) {
-	return uint_t(lhs) >> rhs;
+template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+inline uint_t operator>>(T& lhs, const uint_t& rhs) {
+	uint_t result;
+	uint_t::bitwise_rshift(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T& operator>>=(T& lhs, const uint_t& rhs) {
-	return lhs = static_cast<T>(uint_t(lhs) >> rhs);
+	return lhs = static_cast<T>(lhs >> rhs);
 }
 
 // Comparison Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator==(const T& lhs, const uint_t& rhs) {
-	return rhs == lhs;
+	return uint_t::compare(uint_t(lhs), rhs) == 0;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator!=(const T& lhs, const uint_t& rhs) {
-	return rhs != lhs;
+	return uint_t::compare(uint_t(lhs), rhs) != 0;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>(const T& lhs, const uint_t& rhs) {
-	return rhs < lhs;
+	return uint_t::compare(uint_t(lhs), rhs) > 0;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<(const T& lhs, const uint_t& rhs) {
-	return rhs > lhs;
+	return uint_t::compare(uint_t(lhs), rhs) < 0;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>=(const T& lhs, const uint_t& rhs) {
-	return rhs <= lhs;
+	return uint_t::compare(uint_t(lhs), rhs) >= 0;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<=(const T& lhs, const uint_t& rhs) {
-	return rhs >= lhs;
+	return uint_t::compare(uint_t(lhs), rhs) <= 0;
 }
 
 // Arithmetic Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator+(const T& lhs, const uint_t& rhs) {
-	return rhs + lhs;
+	uint_t result;
+	uint_t::add(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2197,17 +2292,21 @@ T& operator+=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator-(const T& lhs, const uint_t& rhs) {
-	return -(rhs - lhs);
+	uint_t result;
+	uint_t::sub(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T& operator-=(T& lhs, const uint_t& rhs) {
-	return lhs = static_cast<T>(-(rhs - lhs));
+	return lhs = static_cast<T>(lhs - rhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator*(const T& lhs, const uint_t& rhs) {
-	return rhs * lhs;
+	uint_t result;
+	uint_t::mult(result, uint_t(lhs), rhs);
+	return result;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2217,22 +2316,26 @@ T& operator*=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator/(const T& lhs, const uint_t& rhs) {
-	return uint_t(lhs) / rhs;
+	uint_t quotient, remainder;
+	uint_t::divmod(quotient, remainder, uint_t(lhs), rhs);
+	return quotient;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T& operator/=(T& lhs, const uint_t& rhs) {
-	return lhs = static_cast<T>(uint_t(lhs) / rhs);
+	return lhs = static_cast<T>(lhs / rhs);
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator%(const T& lhs, const uint_t& rhs) {
-	return uint_t(lhs) % rhs;
+	uint_t quotient, remainder;
+	uint_t::divmod(quotient, remainder, uint_t(lhs), rhs);
+	return remainder;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 T& operator%=(T& lhs, const uint_t& rhs) {
-	return lhs = static_cast<T>(uint_t(lhs) % rhs);
+	return lhs = static_cast<T>(lhs % rhs);
 }
 
 // IO Operator
