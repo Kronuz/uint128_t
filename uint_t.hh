@@ -631,19 +631,18 @@ public:
 			resize(rit_e - rit_f); // shrink
 		}
 
-		int compare(const uint_t& rhs) const {
+		ssize_t compare(const uint_t& rhs) const {
 			const auto& a = size();
 			const auto& b = rhs.size();
-			if (a > b) return 1;
-			if (a < b) return -1;
+			if (a != b) {
+				return a - b;
+			}
 			auto rit = rbegin();
 			auto rit_e = rend();
 			auto rhs_rit = rhs.rbegin();
-			for (; rit != rit_e; ++rit, ++rhs_rit) {
-				const auto& a = *rit;
-				const auto& b = *rhs_rit;
-				if (a > b) return 1;
-				if (a < b) return -1;
+			for (; rit != rit_e && *rit == *rhs_rit; ++rit, ++rhs_rit);
+			if (rit != rit_e) {
+				return *rit - *rhs_rit;
 			}
 			return 0;
 		}
