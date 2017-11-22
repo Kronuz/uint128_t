@@ -885,151 +885,398 @@ public:
 	}
 
 	// Bitwise Operators
+	static void bitwise_and(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		auto result_sz = std::max(lhs_sz, rhs_sz);
+		result.resize(result_sz);
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto rhs_it = rhs.begin();
+		auto rhs_it_e = rhs.begin() + rhs_sz;
+
+		auto it = result.begin();
+		auto it_e = result.begin() + result_sz;
+
+		if (lhs_sz > rhs_sz) {
+			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(lhs_it != lhs_it_e);
+				*it = *lhs_it & *rhs_it;
+			}
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				assert(it != it_e);
+				*it = 0;
+			}
+		} else {
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(rhs_it != rhs_it_e);
+				*it = *lhs_it & *rhs_it;
+			}
+			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				assert(it != it_e);
+				*it = 0;
+			}
+		}
+
+		// Finish up
+		result.trim();
+	}
+
 	uint_t operator&(const uint_t& rhs) const {
-		uint_t result(*this);
-		result &= rhs;
+		uint_t result;
+		bitwise_and(result, *this, rhs);
 		return result;
 	}
 
 	uint_t& operator&=(const uint_t& rhs) {
-		if (size() > rhs.size()) {
-			resize(rhs.size()); // shrink
-		}
-		auto it = begin();
-		auto it_e = end();
-		auto rhs_it = rhs.begin();
-		for (; it != it_e; ++it, ++rhs_it) {
-			*it &= *rhs_it;
-		}
-		trim();
+		bitwise_and(*this, *this, rhs);
 		return *this;
 	}
 
+	static void bitwise_or(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		auto result_sz = std::max(lhs_sz, rhs_sz);
+		result.resize(result_sz);
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto rhs_it = rhs.begin();
+		auto rhs_it_e = rhs.begin() + rhs_sz;
+
+		auto it = result.begin();
+		auto it_e = result.begin() + result_sz;
+
+		if (lhs_sz > rhs_sz) {
+			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(lhs_it != lhs_it_e);
+				*it = *lhs_it | *rhs_it;
+			}
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				assert(it != it_e);
+				*it = *lhs_it;
+			}
+		} else {
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(rhs_it != rhs_it_e);
+				*it = *lhs_it | *rhs_it;
+			}
+			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				assert(it != it_e);
+				*it = *rhs_it;
+			}
+		}
+
+		// Finish up
+		result.trim();
+	}
+
 	uint_t operator|(const uint_t& rhs) const {
-		uint_t result(*this);
-		result |= rhs;
+		uint_t result;
+		bitwise_or(result, *this, rhs);
 		return result;
 	}
 
 	uint_t& operator|=(const uint_t& rhs) {
-		if (size() < rhs.size()) {
-			resize(rhs.size(), 0); // grow
-		}
-		auto it = begin();
-		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.end();
-		for (; rhs_it != rhs_it_e; ++it, ++rhs_it) {
-			*it |= *rhs_it;
-		}
-		trim();
+		bitwise_or(*this, *this, rhs);
 		return *this;
 	}
 
+	static void bitwise_xor(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		auto result_sz = std::max(lhs_sz, rhs_sz);
+		result.resize(result_sz);
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto rhs_it = rhs.begin();
+		auto rhs_it_e = rhs.begin() + rhs_sz;
+
+		auto it = result.begin();
+		auto it_e = result.begin() + result_sz;
+
+		if (lhs_sz > rhs_sz) {
+			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(lhs_it != lhs_it_e);
+				*it = *lhs_it ^ *rhs_it;
+			}
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				assert(it != it_e);
+				*it = *lhs_it;
+			}
+		} else {
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
+				assert(it != it_e);
+				assert(rhs_it != rhs_it_e);
+				*it = *lhs_it ^ *rhs_it;
+			}
+			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
+				assert(it != it_e);
+				*it = *rhs_it;
+			}
+		}
+
+		// Finish up
+		result.trim();
+	}
+
 	uint_t operator^(const uint_t& rhs) const {
-		uint_t result(*this);
-		result ^= rhs;
+		uint_t result;
+		bitwise_xor(result, *this, rhs);
 		return result;
 	}
 
 	uint_t& operator^=(const uint_t& rhs) {
-		if (size() < rhs.size()) {
-			resize(rhs.size(), 0); // grow
-		}
-		auto it = begin();
-		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.end();
-		for (; rhs_it != rhs_it_e; ++it, ++rhs_it) {
-			*it ^= *rhs_it;
-		}
-		trim();
+		bitwise_xor(*this, *this, rhs);
 		return *this;
 	}
 
-	uint_t& inv() {
-		if (!size()) {
-			append(0);
+	static void bitwise_inv(uint_t& result, const uint_t& lhs) {
+		auto lhs_sz = lhs.size();
+
+		auto b = lhs.bits();
+
+		auto result_sz = lhs_sz ? lhs_sz : 1;
+		result.resize(result_sz);
+
+		std::cerr << "b: " << b << std::endl;
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` if `result` is also `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+
+		auto it = result.begin();
+		auto it_e = result.begin() + result_sz;
+
+		for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+			assert(it != it_e);
+			*it = ~*lhs_it;
 		}
-		auto b = bits();
-		auto it = begin();
-		auto it_e = end();
 		for (; it != it_e; ++it) {
-			*it = ~*it;
+			*it = ~static_cast<digit>(0);
 		}
-		trim(b);
-		return *this;
+
+		// Finish up
+		result.trim(b ? b : 1);
 	}
 
 	uint_t operator~() const {
-		uint_t result(*this);
-		result.inv();
+		uint_t result;
+		bitwise_inv(result, *this);
 		return result;
 	}
 
 	// Bit Shift Operators
+	static void bitwise_lshift(uint_t& lhs, const uint_t& rhs) {
+		if (!rhs) {
+			return;
+		}
+
+		uint_t shifts_q;
+		uint_t shifts_r;
+		auto _digit_bits = digit_bits;
+		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		size_t shifts = static_cast<size_t>(shifts_q);
+		size_t shift = static_cast<size_t>(shifts_r);
+
+		if (shifts) {
+			lhs.prepend(shifts, 0);
+		}
+		if (shift) {
+			digit shifted = 0;
+			auto lhs_it = lhs.begin() + shifts;
+			auto lhs_it_e = lhs.end();
+			for (; lhs_it != lhs_it_e; ++lhs_it) {
+				auto v = (*lhs_it << shift) | shifted;
+				shifted = *lhs_it >> (digit_bits - shift);
+				*lhs_it = v;
+			}
+			if (shifted) {
+				lhs.append(shifted);
+			}
+		}
+
+		// Finish up
+		lhs.trim();
+	}
+
+	static void bitwise_lshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+		if (&result == &lhs) {
+			bitwise_lshift(result, rhs);
+			return;
+		}
+		if (!rhs) {
+			result = lhs;
+			return;
+		}
+
+		auto lhs_sz = lhs.size();
+
+		uint_t shifts_q;
+		uint_t shifts_r;
+		auto _digit_bits = digit_bits;
+		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		size_t shifts = static_cast<size_t>(shifts_q);
+		size_t shift = static_cast<size_t>(shifts_r);
+
+		auto result_sz = lhs_sz + shifts;
+		result.grow(result_sz + 1);
+		result.resize(shifts, 0);
+		result.resize(result_sz);
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` if `result` is also `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto it = result.begin() + shifts;
+		auto it_e = result.begin() + result_sz;
+
+		if (shift) {
+			digit shifted = 0;
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				assert(it != it_e);
+				auto v = (*lhs_it << shift) | shifted;
+				shifted = *lhs_it >> (digit_bits - shift);
+				*it = v;
+			}
+			if (shifted) {
+				result.append(shifted);
+			}
+		} else {
+			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
+				assert(it != it_e);
+				*it = *lhs_it;
+			}
+		}
+
+		// Finish up
+		result.trim();
+	}
+
 	uint_t operator<<(const uint_t& rhs) const {
-		uint_t result(*this);
-		result <<= rhs;
+		uint_t result;
+		bitwise_lshift(result, *this, rhs);
 		return result;
 	}
 
 	uint_t& operator<<=(const uint_t& rhs) {
-		if (rhs == 0) {
-			return *this;
-		}
-		assert(rhs.size() == 1);
-		auto shift = rhs.front();
-		auto shifts = shift / digit_bits;
-		shift = shift % digit_bits;
-		if (shift) {
-			digit shifted = 0;
-			auto it = begin();
-			auto it_e = end();
-			for (; it != it_e; ++it) {
-				auto v = (*it << shift) | shifted;
-				shifted = *it >> (digit_bits - shift);
-				*it = v;
-			}
-			if (shifted) {
-				append(shifted);
-			}
-		}
-		if (shifts) {
-			prepend(shifts, 0);
-		}
+		bitwise_lshift(*this, rhs);
 		return *this;
 	}
 
+	static void bitwise_rshift(uint_t& lhs, const uint_t& rhs) {
+		if (!rhs) {
+			return;
+		}
+
+		auto lhs_sz = lhs.size();
+
+		if (rhs >= lhs_sz * digit_bits) {
+			lhs = uint_0();
+			return;
+		}
+
+		uint_t shifts_q;
+		uint_t shifts_r;
+		auto _digit_bits = digit_bits;
+		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		size_t shifts = static_cast<size_t>(shifts_q);
+		size_t shift = static_cast<size_t>(shifts_r);
+
+		if (shifts) {
+			lhs._begin += shifts;
+		}
+		if (shift) {
+			digit shifted = 0;
+			auto lhs_rit = lhs.rbegin();
+			auto lhs_rit_e = lhs.rend();
+			for (; lhs_rit != lhs_rit_e; ++lhs_rit) {
+				auto v = (*lhs_rit >> shift) | shifted;
+				shifted = *lhs_rit << (digit_bits - shift);
+				*lhs_rit = v;
+			}
+			lhs.trim();
+		}
+	}
+
+	static void bitwise_rshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+		if (&result == &lhs) {
+			bitwise_lshift(result, rhs);
+			return;
+		}
+		if (!rhs) {
+			result = lhs;
+			return;
+		}
+
+		auto lhs_sz = lhs.size();
+
+		if (rhs >= lhs_sz * digit_bits) {
+			result = uint_0();
+			return;
+		}
+
+		uint_t shifts_q;
+		uint_t shifts_r;
+		auto _digit_bits = digit_bits;
+		divmod(shifts_q, shifts_r, rhs, _digit_bits);
+		size_t shifts = static_cast<size_t>(shifts_q);
+		size_t shift = static_cast<size_t>(shifts_r);
+
+		auto result_sz = lhs_sz - shifts;
+		result.resize(result_sz);
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` if `result` is also `lhs`.
+		auto lhs_rit = lhs.rbegin();
+		auto lhs_rit_e = lhs.rbegin() + lhs_sz - shifts;
+		auto rit = result.rbegin();
+		auto rit_e = result.rbegin() + result_sz;
+
+		if (shift) {
+			digit shifted = 0;
+			for (; lhs_rit != lhs_rit_e; ++lhs_rit, ++rit) {
+				assert(rit != rit_e);
+				auto v = (*lhs_rit >> shift) | shifted;
+				shifted = *lhs_rit << (digit_bits - shift);
+				*rit = v;
+			}
+		} else {
+			for (; lhs_rit != lhs_rit_e; ++lhs_rit, ++rit) {
+				assert(rit != rit_e);
+				*rit = *lhs_rit;
+			}
+		}
+
+		// Finish up
+		result.trim();
+	}
+
 	uint_t operator>>(const uint_t& rhs) const {
-		uint_t result(*this);
-		result >>= rhs;
+		uint_t result;
+		bitwise_rshift(result, *this, rhs);
 		return result;
 	}
 
 	uint_t& operator>>=(const uint_t& rhs) {
-		if (rhs >= size() * digit_bits) {
-			clear();
-			return *this;
-		} else if (rhs == 0) {
-			return *this;
-		}
-		assert(rhs.size() == 1);
-		auto shift = rhs.front();
-		auto shifts = shift / digit_bits;
-		shift = shift % digit_bits;
-		if (shifts) {
-			_begin += shifts;
-		}
-		if (shift) {
-			digit shifted = 0;
-			auto rit = rbegin();
-			auto rit_e = rend();
-			for (; rit != rit_e; ++rit) {
-				auto v = (*rit >> shift) | shifted;
-				shifted = *rit << (digit_bits - shift);
-				*rit = v;
-			}
-			trim();
-		}
+		bitwise_rshift(*this, rhs);
 		return *this;
 	}
 
