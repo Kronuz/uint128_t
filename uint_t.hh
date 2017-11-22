@@ -135,7 +135,7 @@ private:
 	static constexpr size_t karatsuba_cutoff = 1024 / digit_bits;
 	static constexpr double growth_factor = 1.5;
 
-	size_t _shifts;
+	size_t _begin;
 	std::vector<digit> _value;
 	bool _carry;
 
@@ -151,18 +151,18 @@ private:
 	}
 
 	void prepend(size_t sz, const digit& val) {
-		auto min = std::min(_shifts, sz);
+		auto min = std::min(_begin, sz);
 		if (min) {
-			std::fill(_value.begin() + _shifts - min, _value.begin() + _shifts, val);
-			_shifts -= min;
+			std::fill(_value.begin() + _begin - min, _value.begin() + _begin, val);
+			_begin -= min;
 			sz -= min;
 		}
 		if (sz) {
-			// _shifts should be 0 in here
+			// _begin should be 0 in here
 			auto csz = _value.size();
 			auto isz = grow(csz + sz) - csz;
 			_value.insert(_value.begin(), isz, val);
-			_shifts = isz - sz;
+			_begin = isz - sz;
 		}
 	}
 
@@ -177,40 +177,40 @@ private:
 	}
 
 	void reserve(size_t sz) {
-		_value.reserve(sz + _shifts);
+		_value.reserve(sz + _begin);
 	}
 
 	void resize(size_t sz) {
-		_value.resize(sz + _shifts);
+		_value.resize(sz + _begin);
 	}
 
 	void resize(size_t sz, const digit& c) {
-		_value.resize(sz + _shifts, c);
+		_value.resize(sz + _begin, c);
 	}
 
 	void clear() {
 		_value.clear();
-		_shifts = 0;
+		_begin = 0;
 	}
 
 	digit* data() noexcept {
-		return _value.data() + _shifts;
+		return _value.data() + _begin;
 	}
 
 	const digit* data() const noexcept {
-		return _value.data() + _shifts;
+		return _value.data() + _begin;
 	}
 
 	size_t size() const noexcept {
-		return _value.size() - _shifts;
+		return _value.size() - _begin;
 	}
 
 	std::vector<digit>::iterator begin() noexcept {
-		return _value.begin() + _shifts;
+		return _value.begin() + _begin;
 	}
 
 	std::vector<digit>::const_iterator begin() const noexcept {
-		return _value.cbegin() + _shifts;
+		return _value.cbegin() + _begin;
 	}
 
 	std::vector<digit>::iterator end() noexcept {
@@ -230,11 +230,11 @@ private:
 	}
 
 	std::vector<digit>::reverse_iterator rend() noexcept {
-		return std::vector<digit>::reverse_iterator(_value.begin() + _shifts);
+		return std::vector<digit>::reverse_iterator(_value.begin() + _begin);
 	}
 
 	std::vector<digit>::const_reverse_iterator rend() const noexcept {
-		return std::vector<digit>::const_reverse_iterator(_value.cbegin() + _shifts);
+		return std::vector<digit>::const_reverse_iterator(_value.cbegin() + _begin);
 	}
 
 	std::vector<digit>::reference front() {
@@ -779,7 +779,7 @@ private:
 	}
 
 	uint_t(const std::vector<digit>& value) :
-		_shifts(0),
+		_begin(0),
 		_value(value),
 		_carry(false) {
 		trim();
@@ -788,22 +788,22 @@ private:
 public:
 	// Constructors
 	uint_t() :
-		_shifts(0),
+		_begin(0),
 		_carry(false) { }
 
 	uint_t(const uint_t& o) :
-		_shifts(o._shifts),
+		_begin(o._begin),
 		_value(o._value),
 		_carry(o._carry) { }
 
 	uint_t(uint_t&& o) :
-		_shifts(std::move(o._shifts)),
+		_begin(std::move(o._begin)),
 		_value(std::move(o._value)),
 		_carry(std::move(o._carry)) { }
 
 	template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 	uint_t(const T& value) :
-		_shifts(0),
+		_begin(0),
 		_carry(false) {
 		if (value) {
 			append(static_cast<digit>(value));
@@ -812,7 +812,7 @@ public:
 
 	template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 	uint_t(const T& value, Args... args) :
-		_shifts(0),
+		_begin(0),
 		_carry(false) {
 		_uint_t(args...);
 		append(static_cast<digit>(value));
@@ -837,13 +837,13 @@ public:
 
 	// Assignment Operator
 	uint_t& operator=(const uint_t& o) {
-		_shifts = o._shifts;
+		_begin = o._begin;
 		_value = o._value;
 		_carry = o._carry;
 		return *this;
 	}
 	uint_t& operator=(uint_t&& o) {
-		_shifts = std::move(o._shifts);
+		_begin = std::move(o._begin);
 		_value = std::move(o._value);
 		_carry = std::move(o._carry);
 		return *this;
@@ -1017,7 +1017,7 @@ public:
 		auto shifts = shift / digit_bits;
 		shift = shift % digit_bits;
 		if (shifts) {
-			_shifts += shifts;
+			_begin += shifts;
 		}
 		if (shift) {
 			digit shifted = 0;
