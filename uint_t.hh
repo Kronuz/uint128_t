@@ -133,7 +133,7 @@ public:
     static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
 
 	public:
-		static constexpr size_t karatsuba_cutoff = 70;
+		static constexpr size_t karatsuba_cutoff = 1024 / digit_bits;
 		static constexpr double growth_factor = 1.5;
 
 		size_t _shifts;
