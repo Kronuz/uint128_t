@@ -811,7 +811,7 @@ private:
 	// Karatsuba would pay off *if* the inputs had balanced sizes.
 	// View rhs as a sequence of slices, each with lhs.size() digits,
 	// and multiply the slices by lhs, one at a time.
-	static void karatsuba_lopsided_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff) {
+	static uint_t& karatsuba_lopsided_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -832,6 +832,7 @@ private:
 		}
 
 		result = std::move(r);
+		return result;
 	}
 
 	uint_t(const std::vector<digit>& value) :
@@ -1448,7 +1449,7 @@ public:
 	}
 
 	// Arithmetic Operators
-	static void long_add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1501,20 +1502,21 @@ public:
 
 		// Finish up
 		result.trim();
+		return result;
 	}
 
-	static void add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& add(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
-			return;
+			return result;
 		}
 		if (!lhs) {
 			result = rhs;
-			return;
+			return result;
 		}
 
-		long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
 	uint_t operator+(const uint_view& rhs) const {
@@ -1537,7 +1539,7 @@ public:
 		return *this;
 	}
 
-	static void long_sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1587,16 +1589,17 @@ public:
 
 		// Finish up
 		result.trim();
+		return result;
 	}
 
-	static void sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& sub(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
-			return;
+			return result;
 		}
 
-		long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
 	uint_t operator-(const uint_view& rhs) const {
@@ -1620,14 +1623,13 @@ public:
 	}
 
 	// Long multiplication
-	static void long_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
+	static uint_t& long_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
 		if (lhs_sz > rhs_sz) {
 			// rhs should be the largest:
-			long_mult(result, rhs, lhs);
-			return;
+			return long_mult(result, rhs, lhs);
 		}
 
 		result.resize(rhs.size() + lhs.size(), 0);
@@ -1663,29 +1665,27 @@ public:
 
 		// Finish up
 		result.trim();
+		return result;
 	}
 
 	// Karatsuba multiplication
-	static void karatsuba_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff = 1) {
+	static uint_t& karatsuba_mult(uint_t& result, const uint_view& lhs, const uint_view& rhs, size_t cutoff = 1) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
 		if (lhs_sz > rhs_sz) {
 			// rhs should be the largest:
-			karatsuba_mult(result, rhs, lhs, cutoff);
-			return;
+			return karatsuba_mult(result, rhs, lhs, cutoff);
 		}
 
 		if (lhs_sz <= cutoff) {
-			long_mult(result, lhs, rhs);
-			return;
+			return long_mult(result, lhs, rhs);
 		}
 
 		// If a is too small compared to b, splitting on b gives a degenerate case
 		// in which Karatsuba may be (even much) less efficient than long multiplication.
 		if (2 * lhs_sz <= rhs_sz) {
-			karatsuba_lopsided_mult(result, lhs, rhs, cutoff);
-			return;
+			return karatsuba_lopsided_mult(result, lhs, rhs, cutoff);
 		}
 
 		// Karatsuba:
@@ -1733,28 +1733,29 @@ public:
 		// And add AD_BC to the middle: (AC           BD) + (    AD + BC    ):
 		add(BD, BD, AD_BC, shift, shift);
 
-		// Finish up
-		BD.trim();
-
 		result = std::move(BD);
+
+		// Finish up
+		result.trim();
+		return result;
 	}
 
-	static void mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
+	static uint_t& mult(uint_t& result, const uint_view& lhs, const uint_view& rhs) {
 		// First try saving some calculations:
 		if (!lhs || !rhs) {
 			result = uint_0();
-			return;
+			return result;
 		}
 		if (!compare(lhs, uint_1())) {
 			result = rhs;
-			return;
+			return result;
 		}
 		if (!compare(rhs, uint_1())) {
 			result = lhs;
-			return;
+			return result;
 		}
 
-		karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
+		return karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
 	}
 
 	uint_t operator*(const uint_view& rhs) const {
