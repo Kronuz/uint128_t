@@ -1625,11 +1625,11 @@ public:
 			result = uint_0();
 			return result;
 		}
-		if (!compare(lhs, uint_1())) {
+		if (compare(lhs, uint_1()) == 0) {
 			result = rhs;
 			return result;
 		}
-		if (!compare(rhs, uint_1())) {
+		if (compare(rhs, uint_1()) == 0) {
 			result = lhs;
 			return result;
 		}
@@ -1790,13 +1790,13 @@ public:
 			remainder = a % b;
 			return;
 		}
-		if (!compare(rhs, uint_1())) {
+		if (compare(rhs, uint_1()) == 0) {
 			quotient = lhs;
 			remainder = uint_0();
 			return;
 		}
 		auto compared = compare(lhs, rhs);
-		if (!compared) {
+		if (compared == 0) {
 			quotient = uint_1();
 			remainder = uint_0();
 			return;
