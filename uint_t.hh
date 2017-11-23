@@ -65,10 +65,6 @@ to header-only and extended to arbitrary bit length.
 #  define HAVE___UMUL64
 #  define HAVE___UMUL32
 #  include <intrin.h>
-  typedef unsigned __int64 uint64_t;
-  typedef unsigned __int32 uint32_t;
-  typedef unsigned __int16 uint16_t;
-  typedef unsigned char    uint8_t;
 #endif
 
 #if (defined(__clang__) && __has_builtin(__builtin_clzll)) || (defined(__GNUC__ ) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 3)))
@@ -105,11 +101,11 @@ to header-only and extended to arbitrary bit length.
 
 
 #ifndef DIGIT_T
-#define DIGIT_T        uint64_t
+#define DIGIT_T        std::uint64_t
 #endif
 
 #ifndef HALF_DIGIT_T
-#define HALF_DIGIT_T   uint32_t
+#define HALF_DIGIT_T   std::uint32_t
 #endif
 
 class uint_t;
@@ -338,15 +334,15 @@ private:
 			*lo = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
 		} else if (digit_bits == 32) {
-			auto r = static_cast<uint64_t>(x) * static_cast<uint64_t>(y);
+			auto r = static_cast<std::uint64_t>(x) * static_cast<std::uint64_t>(y);
 			*lo = r;
 			return r >> digit_bits;
 		} else if (digit_bits == 16) {
-			auto r = static_cast<uint32_t>(x) * static_cast<uint32_t>(y);
+			auto r = static_cast<std::uint32_t>(x) * static_cast<std::uint32_t>(y);
 			*lo = r;
 			return r >> digit_bits;
 		} else if (digit_bits == 8) {
-			auto r = static_cast<uint16_t>(x) * static_cast<uint16_t>(y);
+			auto r = static_cast<std::uint16_t>(x) * static_cast<std::uint16_t>(y);
 			*lo = r;
 			return r >> digit_bits;
 		}
@@ -394,15 +390,15 @@ private:
 			*lo = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
 		} else if (digit_bits == 32) {
-			auto r = static_cast<uint64_t>(x) * static_cast<uint64_t>(y) + static_cast<uint64_t>(a) + static_cast<uint64_t>(c);
+			auto r = static_cast<std::uint64_t>(x) * static_cast<std::uint64_t>(y) + static_cast<std::uint64_t>(a) + static_cast<std::uint64_t>(c);
 			*lo = r;
 			return r >> digit_bits;
 		} else if (digit_bits == 16) {
-			auto r = static_cast<uint32_t>(x) * static_cast<uint32_t>(y) + static_cast<uint32_t>(a) + static_cast<uint32_t>(c);
+			auto r = static_cast<std::uint32_t>(x) * static_cast<std::uint32_t>(y) + static_cast<std::uint32_t>(a) + static_cast<std::uint32_t>(c);
 			*lo = r;
 			return r >> digit_bits;
 		} else if (digit_bits == 8) {
-			auto r = static_cast<uint16_t>(x) * static_cast<uint16_t>(y) + static_cast<uint16_t>(a) + static_cast<uint16_t>(c);
+			auto r = static_cast<std::uint16_t>(x) * static_cast<std::uint16_t>(y) + static_cast<std::uint16_t>(a) + static_cast<std::uint16_t>(c);
 			*lo = r;
 			return r >> digit_bits;
 		}
@@ -459,21 +455,21 @@ private:
 			*result = q;
 			return r;
 		} else if (digit_bits == 32) {
-			auto x = static_cast<uint64_t>(x_hi) << digit_bits | static_cast<uint64_t>(x_lo);
+			auto x = static_cast<std::uint64_t>(x_hi) << digit_bits | static_cast<std::uint64_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
 			*result = q;
 			return r;
 		} else if (digit_bits == 16) {
-			auto x = static_cast<uint32_t>(x_hi) << digit_bits | static_cast<uint32_t>(x_lo);
+			auto x = static_cast<std::uint32_t>(x_hi) << digit_bits | static_cast<std::uint32_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
 			*result = q;
 			return r;
 		} else if (digit_bits == 8) {
-			auto x = static_cast<uint16_t>(x_hi) << digit_bits | static_cast<uint16_t>(x_lo);
+			auto x = static_cast<std::uint16_t>(x_hi) << digit_bits | static_cast<std::uint16_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
@@ -537,15 +533,15 @@ private:
 			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
 		} else if (digit_bits == 32) {
-			auto r = static_cast<uint64_t>(x) + static_cast<uint64_t>(y) + static_cast<uint64_t>(c);
+			auto r = static_cast<std::uint64_t>(x) + static_cast<std::uint64_t>(y) + static_cast<std::uint64_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		} else if (digit_bits == 16) {
-			auto r = static_cast<uint32_t>(x) + static_cast<uint32_t>(y) + static_cast<uint32_t>(c);
+			auto r = static_cast<std::uint32_t>(x) + static_cast<std::uint32_t>(y) + static_cast<std::uint32_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		} else if (digit_bits == 8) {
-			auto r = static_cast<uint16_t>(x) + static_cast<uint16_t>(y) + static_cast<uint16_t>(c);
+			auto r = static_cast<std::uint16_t>(x) + static_cast<std::uint16_t>(y) + static_cast<std::uint16_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		}
@@ -606,15 +602,15 @@ private:
 			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
 		} else if (digit_bits == 32) {
-			auto r = static_cast<uint64_t>(x) - static_cast<uint64_t>(y) - static_cast<uint64_t>(c);
+			auto r = static_cast<std::uint64_t>(x) - static_cast<std::uint64_t>(y) - static_cast<std::uint64_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		} else if (digit_bits == 16) {
-			auto r = static_cast<uint32_t>(x) - static_cast<uint32_t>(y) - static_cast<uint32_t>(c);
+			auto r = static_cast<std::uint32_t>(x) - static_cast<std::uint32_t>(y) - static_cast<std::uint32_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		} else if (digit_bits == 8) {
-			auto r = static_cast<uint16_t>(x) - static_cast<uint16_t>(y) - static_cast<uint16_t>(c);
+			auto r = static_cast<std::uint16_t>(x) - static_cast<std::uint16_t>(y) - static_cast<std::uint16_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
 		}
@@ -647,8 +643,8 @@ private:
 		resize(rit_e - rit_f); // shrink
 	}
 
-	static const uint8_t& base_bits(int base) {
-		static const uint8_t _[256] = {
+	static const unsigned& base_bits(int base) {
+		static const unsigned _[256] = {
 			0, 1, 0, 2, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 4,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5,
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -672,9 +668,9 @@ private:
 		return _[base - 1];
 	}
 
-	static const uint8_t& base_size(int base) {
+	static const unsigned& base_size(int base) {
 		// math.ceil(64 / math.log2(base)
-		static const uint8_t _[256] = {
+		static const unsigned _[256] = {
 			0, 64, 41, 32, 28, 25, 23, 22, 21, 20, 19, 18, 18, 17, 17, 16,
 			16, 16, 16, 15, 15, 15, 15, 14, 14, 14, 14, 14, 14, 14, 13, 13,
 			13, 13, 13, 13, 13, 13, 13, 13, 12, 12, 12, 12, 12, 12, 12, 12,
