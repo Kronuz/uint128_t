@@ -813,12 +813,12 @@ public:
 		trim();
 	}
 
-	explicit uint_t(const char* bytes, size_t sz, int base) :
-		uint_t(strtouint(bytes, sz, base)) { }
-
 	template <typename T, size_t N>
 	explicit uint_t(T (&s)[N], int base=10) :
 		uint_t(s, N - 1, base) { }
+
+	explicit uint_t(const char* bytes, size_t sz, int base) :
+		uint_t(strtouint(bytes, sz, base)) { }
 
 	template <typename T>
 	explicit uint_t(const std::vector<T>& bytes, int base=10) :
