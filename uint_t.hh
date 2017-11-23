@@ -2043,9 +2043,7 @@ namespace std {  // This is probably not a good idea
 // Bitwise Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator&(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::bitwise_and(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) & rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2055,9 +2053,7 @@ T& operator&=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator|(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::bitwise_or(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) | rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2067,9 +2063,7 @@ T& operator|=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator^(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::bitwise_xor(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) ^ rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2080,9 +2074,7 @@ T& operator^=(T& lhs, const uint_t& rhs) {
 // Bitshift operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 inline uint_t operator<<(T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::bitwise_lshift(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) << rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2092,9 +2084,7 @@ T& operator<<=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 inline uint_t operator>>(T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::bitwise_rshift(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) >> rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2105,40 +2095,38 @@ T& operator>>=(T& lhs, const uint_t& rhs) {
 // Comparison Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator==(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) == 0;
+	return uint_t(lhs) == rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator!=(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) != 0;
+	return uint_t(lhs) != rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) > 0;
+	return uint_t(lhs) > rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) < 0;
+	return uint_t(lhs) < rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator>=(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) >= 0;
+	return uint_t(lhs) >= rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 bool operator<=(const T& lhs, const uint_t& rhs) {
-	return uint_t::compare(uint_t(lhs), rhs) <= 0;
+	return uint_t(lhs) <= rhs;
 }
 
 // Arithmetic Operators
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator+(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::add(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) + rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2148,9 +2136,7 @@ T& operator+=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator-(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::sub(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) - rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2160,9 +2146,7 @@ T& operator-=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator*(const T& lhs, const uint_t& rhs) {
-	uint_t result;
-	uint_t::mult(result, uint_t(lhs), rhs);
-	return result;
+	return uint_t(lhs) * rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2172,9 +2156,7 @@ T& operator*=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator/(const T& lhs, const uint_t& rhs) {
-	uint_t quotient, remainder;
-	uint_t::divmod(quotient, remainder, uint_t(lhs), rhs);
-	return quotient;
+	return uint_t(lhs) / rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
@@ -2184,9 +2166,7 @@ T& operator/=(T& lhs, const uint_t& rhs) {
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
 uint_t operator%(const T& lhs, const uint_t& rhs) {
-	uint_t quotient, remainder;
-	uint_t::divmod(quotient, remainder, uint_t(lhs), rhs);
-	return remainder;
+	return uint_t(lhs) % rhs;
 }
 
 template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
