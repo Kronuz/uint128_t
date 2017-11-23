@@ -1782,7 +1782,7 @@ public:
 		}
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
-		if (lhs_sz - rhs_sz == 0) {
+		if (lhs_sz == 1 && rhs_sz == 1) {
 			// Fast division and modulo for single value
 			auto a = *lhs.begin();
 			auto b = *rhs.begin();
