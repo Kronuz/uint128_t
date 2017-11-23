@@ -881,7 +881,12 @@ public:
 	}
 
 	// Bitwise Operators
-	static void bitwise_and(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_and(uint_t& lhs, const uint_t& rhs) {
+		// Needs optimized implementation.
+		return bitwise_and(lhs, lhs, rhs);
+	}
+
+	static uint_t& bitwise_and(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -922,20 +927,29 @@ public:
 
 		// Finish up
 		result.trim();
+		return result;
+	}
+
+	static uint_t bitwise_and(const uint_t& lhs, const uint_t& rhs) {
+		uint_t result;
+		bitwise_and(result, lhs, rhs);
+		return result;
 	}
 
 	uint_t operator&(const uint_t& rhs) const {
-		uint_t result;
-		bitwise_and(result, *this, rhs);
-		return result;
+		return bitwise_and(*this, rhs);
 	}
 
 	uint_t& operator&=(const uint_t& rhs) {
-		bitwise_and(*this, *this, rhs);
-		return *this;
+		return bitwise_and(*this, rhs);
 	}
 
-	static void bitwise_or(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_or(uint_t& lhs, const uint_t& rhs) {
+		// Needs optimized implementation.
+		return bitwise_or(lhs, lhs, rhs);
+	}
+
+	static uint_t& bitwise_or(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -976,20 +990,28 @@ public:
 
 		// Finish up
 		result.trim();
+		return result;
+	}
+	static uint_t bitwise_or(const uint_t& lhs, const uint_t& rhs) {
+		uint_t result;
+		bitwise_or(result, lhs, rhs);
+		return result;
 	}
 
 	uint_t operator|(const uint_t& rhs) const {
-		uint_t result;
-		bitwise_or(result, *this, rhs);
-		return result;
+		return bitwise_or(*this, rhs);
 	}
 
 	uint_t& operator|=(const uint_t& rhs) {
-		bitwise_or(*this, *this, rhs);
-		return *this;
+		return bitwise_or(*this, rhs);
 	}
 
-	static void bitwise_xor(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_xor(uint_t& lhs, const uint_t& rhs) {
+		// Needs optimized implementation.
+		return bitwise_xor(lhs, lhs, rhs);
+	}
+
+	static uint_t& bitwise_xor(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1030,20 +1052,47 @@ public:
 
 		// Finish up
 		result.trim();
-	}
-
-	uint_t operator^(const uint_t& rhs) const {
-		uint_t result;
-		bitwise_xor(result, *this, rhs);
 		return result;
 	}
 
-	uint_t& operator^=(const uint_t& rhs) {
-		bitwise_xor(*this, *this, rhs);
-		return *this;
+	static uint_t bitwise_xor(const uint_t& lhs, const uint_t& rhs) {
+		uint_t result;
+		bitwise_xor(result, lhs, rhs);
+		return result;
 	}
 
-	static void bitwise_inv(uint_t& result, const uint_t& lhs) {
+	uint_t operator^(const uint_t& rhs) const {
+		return bitwise_xor(*this, rhs);
+	}
+
+	uint_t& operator^=(const uint_t& rhs) {
+		return bitwise_xor(*this, rhs);
+	}
+
+	static uint_t& bitwise_inv(uint_t& lhs) {
+		auto lhs_sz = lhs.size();
+
+		auto b = lhs.bits();
+
+		if (!lhs_sz) {
+			lhs.append(0);
+		}
+
+		// not using `end()` because resize of `result.resize()` could have
+		// resized `lhs` if `result` is also `lhs`.
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.begin() + lhs_sz;
+
+		for (; lhs_it != lhs_it_e; ++lhs_it) {
+			*lhs_it = ~*lhs_it;
+		}
+
+		// Finish up
+		lhs.trim(b ? b : 1);
+		return lhs;
+	}
+
+	static uint_t& bitwise_inv(uint_t& result, const uint_t& lhs) {
 		auto lhs_sz = lhs.size();
 
 		auto b = lhs.bits();
@@ -1069,18 +1118,27 @@ public:
 
 		// Finish up
 		result.trim(b ? b : 1);
-	}
-
-	uint_t operator~() const {
-		uint_t result;
-		bitwise_inv(result, *this);
 		return result;
 	}
 
+	static uint_t bitwise_inv(const uint_t& lhs) {
+		uint_t result;
+		bitwise_inv(result, lhs);
+		return result;
+	}
+
+	uint_t operator~() const {
+		return bitwise_inv(*this);
+	}
+
+	uint_t inv() {
+		return bitwise_inv(*this);
+	}
+
 	// Bit Shift Operators
-	static void bitwise_lshift(uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_lshift(uint_t& lhs, const uint_t& rhs) {
 		if (!rhs) {
-			return;
+			return lhs;
 		}
 
 		uint_t shifts_q;
@@ -1110,16 +1168,17 @@ public:
 
 		// Finish up
 		lhs.trim();
+		return lhs;
 	}
 
-	static void bitwise_lshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_lshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		if (&result._value == &lhs._value) {
 			bitwise_lshift(result, rhs);
-			return;
+			return result;
 		}
 		if (!rhs) {
 			result = lhs;
-			return;
+			return result;
 		}
 
 		auto lhs_sz = lhs.size();
@@ -1164,22 +1223,26 @@ public:
 
 		// Finish up
 		result.trim();
-	}
-
-	uint_t operator<<(const uint_t& rhs) const {
-		uint_t result;
-		bitwise_lshift(result, *this, rhs);
 		return result;
 	}
 
-	uint_t& operator<<=(const uint_t& rhs) {
-		bitwise_lshift(*this, rhs);
-		return *this;
+	static uint_t bitwise_lshift(const uint_t& lhs, const uint_t& rhs) {
+		uint_t result;
+		bitwise_lshift(result, lhs, rhs);
+		return result;
 	}
 
-	static void bitwise_rshift(uint_t& lhs, const uint_t& rhs) {
+	uint_t operator<<(const uint_t& rhs) const {
+		return bitwise_lshift(*this, rhs);
+	}
+
+	uint_t& operator<<=(const uint_t& rhs) {
+		return bitwise_lshift(*this, rhs);
+	}
+
+	static uint_t& bitwise_rshift(uint_t& lhs, const uint_t& rhs) {
 		if (!rhs) {
-			return;
+			return lhs;
 		}
 
 		auto lhs_sz = lhs.size();
@@ -1187,7 +1250,7 @@ public:
 		auto _digit_bits = digit_bits;
 		if (compare(rhs, uint_t(lhs_sz * _digit_bits)) >= 0) {
 			lhs = uint_0();
-			return;
+			return lhs;
 		}
 
 		uint_t shifts_q;
@@ -1211,16 +1274,18 @@ public:
 			}
 			lhs.trim();
 		}
+
+		return lhs;
 	}
 
-	static void bitwise_rshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
+	static uint_t& bitwise_rshift(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		if (&result._value == &lhs._value) {
 			bitwise_lshift(result, rhs);
-			return;
+			return result;
 		}
 		if (!rhs) {
 			result = lhs;
-			return;
+			return result;
 		}
 
 		auto lhs_sz = lhs.size();
@@ -1228,7 +1293,7 @@ public:
 		auto _digit_bits = digit_bits;
 		if (compare(rhs, uint_t(lhs_sz * _digit_bits)) >= 0) {
 			result = uint_0();
-			return;
+			return result;
 		}
 
 		uint_t shifts_q;
@@ -1265,17 +1330,21 @@ public:
 
 		// Finish up
 		result.trim();
-	}
-
-	uint_t operator>>(const uint_t& rhs) const {
-		uint_t result;
-		bitwise_rshift(result, *this, rhs);
 		return result;
 	}
 
+	static uint_t bitwise_rshift(const uint_t& lhs, const uint_t& rhs) {
+		uint_t result;
+		bitwise_rshift(result, lhs, rhs);
+		return result;
+	}
+
+	uint_t operator>>(const uint_t& rhs) const {
+		return bitwise_rshift(*this, rhs);
+	}
+
 	uint_t& operator>>=(const uint_t& rhs) {
-		bitwise_rshift(*this, rhs);
-		return *this;
+		return bitwise_rshift(*this, rhs);
 	}
 
 	// Logical Operators
@@ -1389,6 +1458,11 @@ public:
 		return result;
 	}
 
+	static uint_t& add(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+		// Needs optimized implementation.
+		return add(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
+	}
+
 	static uint_t& add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
@@ -1403,21 +1477,22 @@ public:
 		return long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	uint_t add(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+	static uint_t add(const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		uint_t result;
-		add(result, *this, rhs, result_start, lhs_start, rhs_start);
+		add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		return result;
+	}
+
+	uint_t add(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		return add(*this, rhs, result_start, lhs_start, rhs_start);
 	}
 
 	uint_t operator+(const uint_t& rhs) const {
-		uint_t result;
-		add(result, *this, rhs);
-		return result;
+		return add(*this, rhs);
 	}
 
 	uint_t& operator+=(const uint_t& rhs) {
-		add(*this, *this, rhs);
-		return *this;
+		return add(*this, rhs);
 	}
 
 	static uint_t& long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
@@ -1473,6 +1548,11 @@ public:
 		return result;
 	}
 
+	static uint_t& sub(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+		// Needs optimized implementation.
+		return sub(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
+	}
+
 	static uint_t& sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
@@ -1483,21 +1563,22 @@ public:
 		return long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	uint_t sub(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+	static uint_t sub(const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
 		uint_t result;
-		sub(result, *this, rhs, result_start, lhs_start, rhs_start);
+		sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		return result;
+	}
+
+	uint_t sub(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		return sub(*this, rhs, result_start, lhs_start, rhs_start);
 	}
 
 	uint_t operator-(const uint_t& rhs) const {
-		uint_t result;
-		sub(result, *this, rhs);
-		return result;
+		return sub(*this, rhs);
 	}
 
 	uint_t& operator-=(const uint_t& rhs) {
-		sub(*this, *this, rhs);
-		return *this;
+		return sub(*this, rhs);
 	}
 
 	// Long multiplication
@@ -1619,6 +1700,11 @@ public:
 		return result;
 	}
 
+	static uint_t& mult(uint_t& lhs, const uint_t& rhs) {
+		// Hard to see how this could have a further optimized implementation.
+		return mult(lhs, lhs, rhs);
+	}
+
 	static uint_t& mult(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!lhs || !rhs) {
@@ -1637,28 +1723,27 @@ public:
 		return karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
 	}
 
-	uint_t mult(const uint_t& rhs) const {
+	static uint_t mult(const uint_t& lhs, const uint_t& rhs) {
 		uint_t result;
-		mult(result, *this, rhs);
+		mult(result, lhs, rhs);
 		return result;
+	}
+
+	uint_t mult(const uint_t& rhs) const {
+		return mult(*this, rhs);
 	}
 
 	uint_t operator*(const uint_t& rhs) const {
-		uint_t result;
-		mult(result, *this, rhs);
-		return result;
+		return mult(*this, rhs);
 	}
 
 	uint_t& operator*=(const uint_t& rhs) {
-		uint_t result;
-		mult(result, *this, rhs);
-		*this = std::move(result);
-		return *this;
+		return mult(*this, rhs);
 	}
 
 	// Single word division
 	// Fastests, but ONLY for single sized rhs
-	static void single_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
+	static std::pair<std::reference_wrapper<uint_t>, std::reference_wrapper<uint_t>> single_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 		assert(rhs.size() == 1);
 		auto n = rhs.front();
 
@@ -1678,10 +1763,11 @@ public:
 
 		quotient = std::move(q);
 		remainder = r;
+		return std::make_pair(std::ref(quotient), std::ref(remainder));
 	}
 
 	// Implementation of Knuth's Algorithm D
-	static void knuth_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
+	static std::pair<std::reference_wrapper<uint_t>, std::reference_wrapper<uint_t>> knuth_divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 		uint_t v(lhs);
 		uint_t w(rhs);
 
@@ -1773,9 +1859,10 @@ public:
 
 		quotient = std::move(q);
 		remainder = std::move(v);
+		return std::make_pair(std::ref(quotient), std::ref(remainder));
 	}
 
-	static void divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
+	static std::pair<std::reference_wrapper<uint_t>, std::reference_wrapper<uint_t>> divmod(uint_t& quotient, uint_t& remainder, const uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			throw std::domain_error("Error: division or modulus by 0");
@@ -1788,44 +1875,44 @@ public:
 			auto b = *rhs.begin();
 			quotient = a / b;
 			remainder = a % b;
-			return;
+			return std::make_pair(std::ref(quotient), std::ref(remainder));
 		}
 		if (compare(rhs, uint_1()) == 0) {
 			quotient = lhs;
 			remainder = uint_0();
-			return;
+			return std::make_pair(std::ref(quotient), std::ref(remainder));
 		}
 		auto compared = compare(lhs, rhs);
 		if (compared == 0) {
 			quotient = uint_1();
 			remainder = uint_0();
-			return;
+			return std::make_pair(std::ref(quotient), std::ref(remainder));
 		}
 		if (!lhs || compared < 0) {
 			quotient = uint_0();
 			remainder = lhs;
-			return;
+			return std::make_pair(std::ref(quotient), std::ref(remainder));
 		}
 		if (rhs_sz == 1) {
-			single_divmod(quotient, remainder, lhs, rhs);
-			return;
+			return single_divmod(quotient, remainder, lhs, rhs);
 		}
 
-		knuth_divmod(quotient, remainder, lhs, rhs);
+		return knuth_divmod(quotient, remainder, lhs, rhs);
+	}
+
+	static std::pair<uint_t, uint_t> divmod(const uint_t& lhs, const uint_t& rhs) {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, lhs, rhs);
+		return std::make_pair(std::move(quotient), std::move(remainder));
 	}
 
 	std::pair<uint_t, uint_t> divmod(const uint_t& rhs) const {
-		uint_t quotient;
-		uint_t remainder;
-		divmod(quotient, remainder, *this, rhs);
-		return std::make_pair(quotient, remainder);
+		return divmod(*this, rhs);
 	}
 
 	uint_t operator/(const uint_t& rhs) const {
-		uint_t quotient;
-		uint_t remainder;
-		divmod(quotient, remainder, *this, rhs);
-		return quotient;
+		return divmod(*this, rhs).first;
 	}
 
 	uint_t& operator/=(const uint_t& rhs) {
@@ -1837,10 +1924,7 @@ public:
 	}
 
 	uint_t operator%(const uint_t& rhs) const {
-		uint_t quotient;
-		uint_t remainder;
-		divmod(quotient, remainder, *this, rhs);
-		return remainder;
+		return divmod(*this, rhs).second;
 	}
 
 	uint_t& operator%=(const uint_t& rhs) {
