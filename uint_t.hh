@@ -1400,6 +1400,9 @@ public:
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
+		assert(lhs_sz > cutoff);
+		assert(2 * lhs_sz <= rhs_sz);
+
 		auto rhs_begin = rhs._begin;
 		std::size_t shift = 0;
 
