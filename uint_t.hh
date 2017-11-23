@@ -1519,6 +1519,17 @@ public:
 		return long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
+	uint_t add(const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		uint_t result;
+		add(result, *this, rhs, result_start, lhs_start, rhs_start);
+		return result;
+	}
+	uint_t add(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		uint_t result;
+		add(result, *this, rhs, result_start, lhs_start, rhs_start);
+		return result;
+	}
+
 	uint_t operator+(const uint_view& rhs) const {
 		uint_t result;
 		add(result, *this, rhs);
@@ -1600,6 +1611,17 @@ public:
 		}
 
 		return long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
+	}
+
+	uint_t sub(const uint_view& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		uint_t result;
+		sub(result, *this, rhs, result_start, lhs_start, rhs_start);
+		return result;
+	}
+	uint_t sub(const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) const {
+		uint_t result;
+		sub(result, *this, rhs, result_start, lhs_start, rhs_start);
+		return result;
 	}
 
 	uint_t operator-(const uint_view& rhs) const {
@@ -1756,6 +1778,17 @@ public:
 		}
 
 		return karatsuba_mult(result, lhs, rhs, karatsuba_cutoff);
+	}
+
+	uint_t mult(const uint_view& rhs) const {
+		uint_t result;
+		mult(result, *this, rhs);
+		return result;
+	}
+	uint_t mult(const uint_t& rhs) const {
+		uint_t result;
+		mult(result, *this, rhs);
+		return result;
 	}
 
 	uint_t operator*(const uint_view& rhs) const {
@@ -1938,6 +1971,19 @@ public:
 		}
 
 		knuth_divmod(quotient, remainder, lhs, rhs);
+	}
+
+	std::pair<uint_t, uint_t> divmod(const uint_view& rhs) const {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		return std::make_pair(quotient, remainder);
+	}
+	std::pair<uint_t, uint_t> divmod(const uint_t& rhs) const {
+		uint_t quotient;
+		uint_t remainder;
+		divmod(quotient, remainder, *this, rhs);
+		return std::make_pair(quotient, remainder);
 	}
 
 	uint_t operator/(const uint_view& rhs) const {
