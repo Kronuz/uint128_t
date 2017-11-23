@@ -1349,7 +1349,8 @@ public:
 			return long_mult(result, rhs, lhs);
 		}
 
-		result.resize(rhs.size() + lhs.size(), 0);
+		uint_t tmp;
+		tmp.resize(rhs.size() + lhs.size(), 0);
 
 		auto it_lhs = lhs.begin();
 		auto it_lhs_e = lhs.end();
@@ -1357,7 +1358,7 @@ public:
 		auto it_rhs = rhs.begin();
 		auto it_rhs_e = rhs.end();
 
-		auto it_result = result.begin();
+		auto it_result = tmp.begin();
 		auto it_result_s = it_result;
 		auto it_result_l = it_result;
 
@@ -1378,7 +1379,9 @@ public:
 			}
 		}
 
-		result.resize(it_result_l - it_result_s); // shrink
+		tmp.resize(it_result_l - it_result_s); // shrink
+
+		result = std::move(tmp);
 
 		// Finish up
 		result.trim();
