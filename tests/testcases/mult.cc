@@ -40,3 +40,12 @@ TEST(External, multiply) {
 	EXPECT_EQ(u32 *= val, (uint32_t)         0x5f5f5f60ULL);
 	EXPECT_EQ(u64 *= val, (uint64_t) 0x5f5f5f5f5f5f5f60ULL);
 }
+
+TEST(External, inplace) {
+	uint_t val = 0;
+	for (const auto& i : {1, 29, 15, 57, 12, 45}) {
+		val *= 58;
+		val += i;
+	}
+	EXPECT_EQ(val, 0x3ade68b1);
+}
