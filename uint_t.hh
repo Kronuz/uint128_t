@@ -126,24 +126,24 @@ private:
 	using                   digit             = DIGIT_T;
 	using                   half_digit        = HALF_DIGIT_T;
 
-	static constexpr size_t digit_octets      = sizeof(digit);          // number of octets per digit
-	static constexpr size_t digit_bits        = digit_octets * 8;       // number of bits per digit
-	static constexpr size_t half_digit_octets = sizeof(half_digit);     // number of octets per half_digit
-	static constexpr size_t half_digit_bits   = half_digit_octets * 8;  // number of bits per half_digit
+	static constexpr std::size_t digit_octets      = sizeof(digit);          // number of octets per digit
+	static constexpr std::size_t digit_bits        = digit_octets * 8;       // number of bits per digit
+	static constexpr std::size_t half_digit_octets = sizeof(half_digit);     // number of octets per half_digit
+	static constexpr std::size_t half_digit_bits   = half_digit_octets * 8;  // number of bits per half_digit
 	static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
 
-	static constexpr size_t karatsuba_cutoff = 1024 / digit_bits;
+	static constexpr std::size_t karatsuba_cutoff = 1024 / digit_bits;
 	static constexpr double growth_factor = 1.5;
 
-	size_t _begin;
-	size_t _end;
+	std::size_t _begin;
+	std::size_t _end;
 	std::vector<digit> _value_instance;
 	std::vector<digit>& _value;
 	bool _carry;
 
 	// Window to vector (uses _begin and _end)
 
-	size_t grow(size_t n) {
+	std::size_t grow(std::size_t n) {
 		auto cc = _value.capacity();
 		if (n >= cc) {
 			cc = n * growth_factor;
@@ -152,7 +152,7 @@ private:
 		return cc;
 	}
 
-	void prepend(size_t sz, const digit& val) {
+	void prepend(std::size_t sz, const digit& val) {
 		auto min = std::min(_begin, sz);
 		if (min) {
 			std::fill(_value.begin() + _begin - min, _value.begin() + _begin, val);
@@ -178,15 +178,15 @@ private:
 		_value.insert(_value.end(), val.begin(), val.end());
 	}
 
-	void reserve(size_t sz) {
+	void reserve(std::size_t sz) {
 		_value.reserve(sz + _begin);
 	}
 
-	void resize(size_t sz) {
+	void resize(std::size_t sz) {
 		_value.resize(sz + _begin);
 	}
 
-	void resize(size_t sz, const digit& c) {
+	void resize(std::size_t sz, const digit& c) {
 		_value.resize(sz + _begin, c);
 	}
 
@@ -203,7 +203,7 @@ private:
 		return _value.data() + _begin;
 	}
 
-	size_t size() const noexcept {
+	std::size_t size() const noexcept {
 		return _end ? _end - _begin : _value.size() - _begin;
 	}
 
@@ -965,8 +965,8 @@ public:
 		auto _digit_bits = digit_bits;
 		auto uint_digit_bits = uint_t(_digit_bits);
 		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
-		size_t shifts = static_cast<size_t>(shifts_q);
-		size_t shift = static_cast<size_t>(shifts_r);
+		std::size_t shifts = static_cast<std::size_t>(shifts_q);
+		std::size_t shift = static_cast<std::size_t>(shifts_r);
 
 		if (shifts) {
 			lhs.prepend(shifts, 0);
@@ -1007,8 +1007,8 @@ public:
 		auto _digit_bits = digit_bits;
 		auto uint_digit_bits = uint_t(_digit_bits);
 		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
-		size_t shifts = static_cast<size_t>(shifts_q);
-		size_t shift = static_cast<size_t>(shifts_r);
+		std::size_t shifts = static_cast<std::size_t>(shifts_q);
+		std::size_t shift = static_cast<std::size_t>(shifts_r);
 
 		auto result_sz = lhs_sz + shifts;
 		result.grow(result_sz + 1);
@@ -1068,8 +1068,8 @@ public:
 		uint_t shifts_r;
 		auto uint_digit_bits = uint_t(_digit_bits);
 		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
-		size_t shifts = static_cast<size_t>(shifts_q);
-		size_t shift = static_cast<size_t>(shifts_r);
+		std::size_t shifts = static_cast<std::size_t>(shifts_q);
+		std::size_t shift = static_cast<std::size_t>(shifts_r);
 
 		if (shifts) {
 			lhs._begin += shifts;
@@ -1111,8 +1111,8 @@ public:
 		uint_t shifts_r;
 		auto uint_digit_bits = uint_t(_digit_bits);
 		divmod(shifts_q, shifts_r, rhs, uint_digit_bits);
-		size_t shifts = static_cast<size_t>(shifts_q);
-		size_t shift = static_cast<size_t>(shifts_r);
+		std::size_t shifts = static_cast<std::size_t>(shifts_q);
+		std::size_t shift = static_cast<std::size_t>(shifts_r);
 
 		auto result_sz = lhs_sz - shifts;
 		result.resize(result_sz);
@@ -1150,28 +1150,28 @@ public:
 		return result;
 	}
 
-	static ssize_t compare(const uint_t& lhs, const uint_t& rhs) {
+	static int compare(const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
-		if (lhs_sz != rhs_sz) {
-			return lhs_sz - rhs_sz;
-		}
+		if (lhs_sz > rhs_sz) return 1;
+		if (lhs_sz < rhs_sz) return -1;
 		auto lhs_rit = lhs.rbegin();
 		auto lhs_rit_e = lhs.rend();
 		auto rhs_rit = rhs.rbegin();
 		for (; lhs_rit != lhs_rit_e && *lhs_rit == *rhs_rit; ++lhs_rit, ++rhs_rit);
 		if (lhs_rit != lhs_rit_e) {
-			return *lhs_rit - *rhs_rit;
+			if (*lhs_rit > *rhs_rit) return 1;
+			if (*lhs_rit < *rhs_rit) return -1;
 		}
 		return 0;
 	}
 
-	static uint_t& long_add(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_add(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// Needs optimized implementation.
 		return long_add(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t& long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1227,7 +1227,7 @@ public:
 		return result;
 	}
 
-	static uint_t& add(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& add(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			return lhs;
@@ -1240,7 +1240,7 @@ public:
 		return long_add(lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t& add(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& add(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
@@ -1254,18 +1254,18 @@ public:
 		return long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t add(const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t add(const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		uint_t result;
 		add(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		return result;
 	}
 
-	static uint_t& long_sub(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_sub(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// Needs optimized implementation.
 		return long_sub(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t& long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1318,7 +1318,7 @@ public:
 		return result;
 	}
 
-	static uint_t& sub(uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& sub(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			return lhs;
@@ -1327,7 +1327,7 @@ public:
 		return long_sub(lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t& sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t& sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
@@ -1337,7 +1337,7 @@ public:
 		return long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 	}
 
-	static uint_t sub(const uint_t& lhs, const uint_t& rhs, size_t result_start=0, size_t lhs_start=0, size_t rhs_start=0) {
+	static uint_t sub(const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
 		uint_t result;
 		sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
 		return result;
@@ -1390,7 +1390,7 @@ public:
 	}
 
 	// A helper for Karatsuba multiplication to split a number in two, at n.
-	static std::pair<const uint_t, const uint_t> karatsuba_mult_split(const uint_t& num, size_t n) {
+	static std::pair<const uint_t, const uint_t> karatsuba_mult_split(const uint_t& num, std::size_t n) {
 		const uint_t a(num, num._begin, num._begin + n);
 		const uint_t b(num, num._begin + n, num._end);
 		return std::make_pair(std::move(a), std::move(b));
@@ -1400,12 +1400,12 @@ public:
 	// Karatsuba would pay off *if* the inputs had balanced sizes.
 	// View rhs as a sequence of slices, each with lhs.size() digits,
 	// and multiply the slices by lhs, one at a time.
-	static uint_t& karatsuba_lopsided_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff) {
+	static uint_t& karatsuba_lopsided_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t cutoff) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
 		auto rhs_begin = rhs._begin;
-		size_t shift = 0;
+		std::size_t shift = 0;
 
 		uint_t r;
 		while (rhs_sz > 0) {
@@ -1425,7 +1425,7 @@ public:
 	}
 
 	// Karatsuba multiplication
-	static uint_t& karatsuba_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, size_t cutoff = 1) {
+	static uint_t& karatsuba_mult(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t cutoff = 1) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
@@ -1696,7 +1696,7 @@ private:
 	// Constructors
 
 	// This constructor creates a window view of the _value
-	uint_t(const uint_t& o, size_t begin, size_t end) :
+	uint_t(const uint_t& o, std::size_t begin, std::size_t end) :
 		_begin(begin),
 		_end(end),
 		_value(o._value),
@@ -1745,11 +1745,11 @@ public:
 		trim();
 	}
 
-	template <typename T, size_t N>
+	template <typename T, std::size_t N>
 	explicit uint_t(T (&s)[N], int base=10) :
 		uint_t(s, N - 1, base) { }
 
-	explicit uint_t(const char* bytes, size_t sz, int base) :
+	explicit uint_t(const char* bytes, std::size_t sz, int base) :
 		uint_t(strtouint(bytes, sz, base)) { }
 
 	template <typename T>
@@ -1982,20 +1982,20 @@ public:
 	}
 
 	// Get private value at index
-	const digit& value(size_t idx) const {
+	const digit& value(std::size_t idx) const {
 		static const digit zero = 0;
 		return idx < size() ? *(begin() + idx) : zero;
 	}
 
 	// Get value of bit N
-	bool operator[](size_t n) const {
+	bool operator[](std::size_t n) const {
 		auto nd = n / digit_bits;
 		auto nm = n % digit_bits;
 		return nd < size() ? (*(begin() + nd) >> nm) & 1 : 0;
 	}
 
 	// Get bitsize of value
-	size_t bits() const {
+	std::size_t bits() const {
 		auto sz = size();
 		if (sz) {
 			return _bits(back()) + (sz - 1) * digit_bits;
@@ -2003,7 +2003,7 @@ public:
 		return 0;
 	}
 
-	static uint_t strtouint(const char* bytes, size_t sz, int base) {
+	static uint_t strtouint(const char* bytes, std::size_t sz, int base) {
 		uint_t result;
 
 		if (base >= 2 && base <= 36) {
