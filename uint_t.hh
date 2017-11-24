@@ -313,12 +313,12 @@ public:
 private:
 	// Optimized primitives for operations
 
-	template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 	void _uint_t(const T& value) {
 		append(static_cast<digit>(value));
 	}
 
-	template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 	void _uint_t(const T& value, Args... args) {
 		_uint_t(args...);
 		append(static_cast<digit>(value));
@@ -1840,7 +1840,7 @@ public:
 		_value(_value_instance),
 		_carry(std::move(o._carry)) { }
 
-	template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 	uint_t(const T& value) :
 		_begin(0),
 		_end(0),
@@ -1851,7 +1851,7 @@ public:
 		}
 	}
 
-	template <typename T, typename... Args, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 	uint_t(const T& value, Args... args) :
 		_begin(0),
 		_end(0),
@@ -2260,135 +2260,135 @@ namespace std {  // This is probably not a good idea
 // If the output is not a bool, casts to type T
 
 // Bitwise Operators
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator&(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) & rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator&=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs & lhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator|(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) | rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator|=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs | lhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator^(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) ^ rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator^=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs ^ lhs);
 }
 
 // Bitshift operators
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 inline uint_t operator<<(T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) << rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator<<=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs << rhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 inline uint_t operator>>(T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) >> rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator>>=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs >> rhs);
 }
 
 // Comparison Operators
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator==(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) == rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator!=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) != rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator>(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) > rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator<(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) < rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator>=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) >= rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 bool operator<=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) <= rhs;
 }
 
 // Arithmetic Operators
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator+(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) + rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator+=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs + lhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator-(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) - rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator-=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs - rhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator*(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) * rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator*=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs * lhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator/(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) / rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator/=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs / rhs);
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 uint_t operator%(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) % rhs;
 }
 
-template <typename T, typename = typename std::enable_if<std::is_integral<T>::value>::type>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
 T& operator%=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs % rhs);
 }
