@@ -29,7 +29,7 @@ before_script:
   - cmake CMakeLists.txt
   - make
 
-  - cd ../uint_t/tests
+  - cd ../uinteger_t/tests
   - make
 
 script:

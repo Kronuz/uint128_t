@@ -1,18 +1,18 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(Arithmetic, add) {
-	uint_t low (0, 1);
-	uint_t high(1, 0);
+	uinteger_t low (0, 1);
+	uinteger_t high(1, 0);
 
 	EXPECT_EQ(low  + low,  2);
-	EXPECT_EQ(low  + high, uint_t(1, 1));
-	EXPECT_EQ(high + high, uint_t(2, 0));
+	EXPECT_EQ(low  + high, uinteger_t(1, 1));
+	EXPECT_EQ(high + high, uinteger_t(2, 0));
 
 	EXPECT_EQ(low  += low,  2);
-	EXPECT_EQ(low  += high, uint_t(1, 2));
-	EXPECT_EQ(high += low,  uint_t(2, 2));
+	EXPECT_EQ(low  += high, uinteger_t(1, 2));
+	EXPECT_EQ(high += low,  uinteger_t(2, 2));
 }
 
 TEST(External, add) {
@@ -23,14 +23,14 @@ TEST(External, add) {
 	uint32_t u32 = 0xaaaaaaaaULL;
 	uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-	const uint_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
+	const uinteger_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
 
-	EXPECT_EQ(t   +  val, uint_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f1ULL));
-	EXPECT_EQ(f   +  val, uint_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL));
-	EXPECT_EQ(u8  +  val, uint_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f19aULL));
-	EXPECT_EQ(u16 +  val, uint_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f19b9aULL));
-	EXPECT_EQ(u32 +  val, uint_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f19b9b9b9aULL));
-	EXPECT_EQ(u64 +  val, uint_t(0xf0f0f0f0f0f0f0f1ULL, 0x9b9b9b9b9b9b9b9aULL));
+	EXPECT_EQ(t   +  val, uinteger_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f1ULL));
+	EXPECT_EQ(f   +  val, uinteger_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL));
+	EXPECT_EQ(u8  +  val, uinteger_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f19aULL));
+	EXPECT_EQ(u16 +  val, uinteger_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f19b9aULL));
+	EXPECT_EQ(u32 +  val, uinteger_t(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f19b9b9b9aULL));
+	EXPECT_EQ(u64 +  val, uinteger_t(0xf0f0f0f0f0f0f0f1ULL, 0x9b9b9b9b9b9b9b9aULL));
 
 	EXPECT_EQ(t   += val, true);
 	EXPECT_EQ(f   += val, true);

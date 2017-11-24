@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(BitShift, left1) {
 	// operator<<
-	uint_t val(0x1);
+	uinteger_t val(0x1);
 	uint64_t exp_val = 1;
 
 	for (uint8_t i = 0; i < 64; ++i) {
 		EXPECT_EQ(val << i, exp_val << i);
 	}
 
-	uint_t zero(0);
+	uinteger_t zero(0);
 	for (uint8_t i = 0; i < 64; ++i) {
 		EXPECT_EQ(zero << i, 0);
 	}
@@ -27,7 +27,7 @@ TEST(BitShift, left1) {
 }
 
 TEST(BitShift, left2) {
-	uint_t val(0x1);
+	uinteger_t val(0x1);
 	uint64_t exp_val = 1;
 
 	// operator<<=
@@ -35,7 +35,7 @@ TEST(BitShift, left2) {
 		EXPECT_EQ(val <<= 1, exp_val <<= 1);
 	}
 
-	uint_t zero(0);
+	uinteger_t zero(0);
 	for (uint8_t i = 0; i < 63; ++i) {
 		EXPECT_EQ(zero <<= 1, 0);
 	}
@@ -59,7 +59,7 @@ TEST(External, shift_left_zero) {
 	uint32_t u32 = 0xffffffffULL;
 	uint64_t u64 = 0xffffffffffffffffULL;
 
-	const uint_t zero(0);
+	const uinteger_t zero(0);
 	EXPECT_EQ(t   << zero, t);
 	EXPECT_EQ(f   << zero, f);
 	EXPECT_EQ(u8  << zero, u8);
@@ -83,13 +83,13 @@ TEST(External, shift_left_one) {
 	uint32_t u32 = 0xffffffffULL;
 	uint64_t u64 = 0xffffffffffffffffULL;
 
-	const uint_t one(1);
-	EXPECT_EQ(t   << one, uint_t(t)   << 1);
-	EXPECT_EQ(f   << one, uint_t(f)   << 1);
-	EXPECT_EQ(u8  << one, uint_t(u8)  << 1);
-	EXPECT_EQ(u16 << one, uint_t(u16) << 1);
-	EXPECT_EQ(u32 << one, uint_t(u32) << 1);
-	EXPECT_EQ(u64 << one, uint_t(u64) << 1);
+	const uinteger_t one(1);
+	EXPECT_EQ(t   << one, uinteger_t(t)   << 1);
+	EXPECT_EQ(f   << one, uinteger_t(f)   << 1);
+	EXPECT_EQ(u8  << one, uinteger_t(u8)  << 1);
+	EXPECT_EQ(u16 << one, uinteger_t(u16) << 1);
+	EXPECT_EQ(u32 << one, uinteger_t(u32) << 1);
+	EXPECT_EQ(u64 << one, uinteger_t(u64) << 1);
 
 	EXPECT_EQ(t   <<= one, true);
 	EXPECT_EQ(f   <<= one, false);
@@ -105,12 +105,12 @@ TEST(External, shift_left) {
 	uint32_t u32 = 0xffffffffULL;
 	uint64_t u64 = 0xffffffffffffffffULL;
 
-	EXPECT_EQ(u8  << uint_t(7),  uint_t(0x7f80ULL));
-	EXPECT_EQ(u16 << uint_t(15), uint_t(0x7fff8000ULL));
-	EXPECT_EQ(u32 << uint_t(31), uint_t(0x7fffffff80000000ULL));
-	EXPECT_EQ(u64 << uint_t(63), uint_t(0x7fffffffffffffff, 0x8000000000000000ULL));
-	EXPECT_EQ(u8  <<= uint_t(7),  (uint8_t)  0x80);
-	EXPECT_EQ(u16 <<= uint_t(15), (uint16_t) 0x8000);
-	EXPECT_EQ(u32 <<= uint_t(31), (uint32_t) 0x80000000);
-	EXPECT_EQ(u64 <<= uint_t(63), (uint64_t) 0x8000000000000000);
+	EXPECT_EQ(u8  << uinteger_t(7),  uinteger_t(0x7f80ULL));
+	EXPECT_EQ(u16 << uinteger_t(15), uinteger_t(0x7fff8000ULL));
+	EXPECT_EQ(u32 << uinteger_t(31), uinteger_t(0x7fffffff80000000ULL));
+	EXPECT_EQ(u64 << uinteger_t(63), uinteger_t(0x7fffffffffffffff, 0x8000000000000000ULL));
+	EXPECT_EQ(u8  <<= uinteger_t(7),  (uint8_t)  0x80);
+	EXPECT_EQ(u16 <<= uinteger_t(15), (uint16_t) 0x8000);
+	EXPECT_EQ(u32 <<= uinteger_t(31), (uint32_t) 0x80000000);
+	EXPECT_EQ(u64 <<= uinteger_t(63), (uint64_t) 0x8000000000000000);
 }

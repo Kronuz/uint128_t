@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(Arithmetic, subtract) {
-	uint_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL);
-	uint_t small(1);
-	uint_t zero(0);
+	uinteger_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL);
+	uinteger_t small(1);
+	uinteger_t zero(0);
 
 	EXPECT_EQ(small - small, 0);
-	EXPECT_EQ(small - big,   uint_t(0, 0, 0, 2));
-	EXPECT_EQ(big   - small, uint_t(0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xfffffffffffffffeULL));
+	EXPECT_EQ(small - big,   uinteger_t(0, 0, 0, 2));
+	EXPECT_EQ(big   - small, uinteger_t(0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xfffffffffffffffeULL));
 	EXPECT_EQ(big   - big,   0);
-	EXPECT_EQ(zero  - small, uint_t(0xffffffffffffffffULL));
+	EXPECT_EQ(zero  - small, uinteger_t(0xffffffffffffffffULL));
 }
 
 TEST(External, subtract) {
@@ -22,14 +22,14 @@ TEST(External, subtract) {
 	uint32_t u32 = 0xaaaaaaaaULL;
 	uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-	const uint_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
+	const uinteger_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
 
-	EXPECT_EQ(t   -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f11ULL));
-	EXPECT_EQ(f   -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f10ULL));
-	EXPECT_EQ(u8  -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0fbaULL));
-	EXPECT_EQ(u16 -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0fb9baULL));
-	EXPECT_EQ(u32 -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0fb9b9b9baULL));
-	EXPECT_EQ(u64 -  val, uint_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0xb9b9b9b9b9b9b9baULL));
+	EXPECT_EQ(t   -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f11ULL));
+	EXPECT_EQ(f   -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f10ULL));
+	EXPECT_EQ(u8  -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0fbaULL));
+	EXPECT_EQ(u16 -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0fb9baULL));
+	EXPECT_EQ(u32 -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0fb9b9b9baULL));
+	EXPECT_EQ(u64 -  val, uinteger_t(0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0x0f0f0f0f0f0f0f0fULL, 0xb9b9b9b9b9b9b9baULL));
 
 	EXPECT_EQ(t   -= val, true);
 	EXPECT_EQ(f   -= val, true);

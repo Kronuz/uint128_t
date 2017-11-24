@@ -1,17 +1,17 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(Arithmetic, multiply) {
-	uint_t val(0xfedbca9876543210ULL);
+	uinteger_t val(0xfedbca9876543210ULL);
 
-	EXPECT_EQ(val * val, uint_t(0xfdb8e2bacbfe7cefULL, 0x010e6cd7a44a4100ULL));
+	EXPECT_EQ(val * val, uinteger_t(0xfdb8e2bacbfe7cefULL, 0x010e6cd7a44a4100ULL));
 
-	const uint_t zero = 0;
+	const uinteger_t zero = 0;
 	EXPECT_EQ(val  * zero, zero);
 	EXPECT_EQ(zero * val,  zero);
 
-	const uint_t one = 1;
+	const uinteger_t one = 1;
 	EXPECT_EQ(val * one, val);
 	EXPECT_EQ(one * val, val);
 }
@@ -24,14 +24,14 @@ TEST(External, multiply) {
 	uint32_t u32 = 0xaaaaaaaaULL;
 	uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-	const uint_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
+	const uinteger_t val(0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL, 0xf0f0f0f0f0f0f0f0ULL);
 
 	EXPECT_EQ(t   *  val, val);
 	EXPECT_EQ(f   *  val, 0);
-	EXPECT_EQ(u8  *  val, uint_t(0x9fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffff60ULL));
-	EXPECT_EQ(u16 *  val, uint_t(0xa09fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffff5f60ULL));
-	EXPECT_EQ(u32 *  val, uint_t(0xa0a0a09f, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffff5f5f5f60ULL));
-	EXPECT_EQ(u64 *  val, uint_t(0xa0a0a0a0a0a0a09fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x5f5f5f5f5f5f5f60ULL));
+	EXPECT_EQ(u8  *  val, uinteger_t(0x9fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffff60ULL));
+	EXPECT_EQ(u16 *  val, uinteger_t(0xa09fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffff5f60ULL));
+	EXPECT_EQ(u32 *  val, uinteger_t(0xa0a0a09f, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffff5f5f5f60ULL));
+	EXPECT_EQ(u64 *  val, uinteger_t(0xa0a0a0a0a0a0a09fULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL, 0x5f5f5f5f5f5f5f60ULL));
 
 	EXPECT_EQ(t   *= val, true);
 	EXPECT_EQ(f   *= val, false);
@@ -42,7 +42,7 @@ TEST(External, multiply) {
 }
 
 TEST(External, inplace) {
-	uint_t val = 0;
+	uinteger_t val = 0;
 	for (const auto& i : {1, 29, 15, 57, 12, 45}) {
 		val *= 58;
 		val += i;

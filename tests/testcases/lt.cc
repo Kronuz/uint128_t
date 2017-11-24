@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(Comparison, less_than) {
-	const uint_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
-	const uint_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
+	const uinteger_t big  (0xffffffffffffffffULL, 0xffffffffffffffffULL);
+	const uinteger_t small(0x0000000000000000ULL, 0x0000000000000000ULL);
 
 	EXPECT_EQ(small < small, false);
 	EXPECT_EQ(small < big,    true);
@@ -21,8 +21,8 @@ do                                                                      \
 	const T small = std::numeric_limits <Z>::min();                     \
 	const T big   = std::numeric_limits <Z>::max();                     \
 																		\
-	const uint_t int_small(small);                                      \
-	const uint_t int_big(big);                                          \
+	const uinteger_t int_small(small);                                      \
+	const uinteger_t int_big(big);                                          \
 																		\
 	EXPECT_EQ(small > int_small, false);                                \
 	EXPECT_EQ(small > int_big,   false);                                \
@@ -40,8 +40,8 @@ do                                                                      \
 	const T small =  1;                                                 \
 	const T big = std::numeric_limits <Z>::max();                       \
 																		\
-	const uint_t int_small(small);                                      \
-	const uint_t int_big(big);                                          \
+	const uinteger_t int_small(small);                                      \
+	const uinteger_t int_big(big);                                          \
 																		\
 	EXPECT_EQ(small > int_small, false);                                \
 	EXPECT_EQ(small > int_big,   false);                                \

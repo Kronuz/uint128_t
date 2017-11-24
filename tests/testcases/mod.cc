@@ -1,20 +1,20 @@
 #include <gtest/gtest.h>
 
-#include "uint_t.hh"
+#include "uinteger_t.hh"
 
 TEST(Arithmetic, modulo) {
 	// has remainder
-	const uint_t val    (0xffffffffffffffffULL, 0xffffffffffffffffULL);
-	const uint_t val_mod(0xfedcba9876543210ULL);
+	const uinteger_t val    (0xffffffffffffffffULL, 0xffffffffffffffffULL);
+	const uinteger_t val_mod(0xfedcba9876543210ULL);
 
-	EXPECT_EQ(val % val_mod, uint_t(0x7f598f328cc265bfULL));
+	EXPECT_EQ(val % val_mod, uinteger_t(0x7f598f328cc265bfULL));
 
 	// no remainder
-	const uint_t val_0  (0xfedcba9876543210, 0);
+	const uinteger_t val_0  (0xfedcba9876543210, 0);
 	EXPECT_EQ(val_0 % val_mod, 0);
 
 	// mod 0
-	EXPECT_THROW(uint_t(1) % uint_t(0), std::domain_error);
+	EXPECT_THROW(uinteger_t(1) % uinteger_t(0), std::domain_error);
 }
 
 TEST(External, modulo) {
@@ -25,14 +25,14 @@ TEST(External, modulo) {
 	uint32_t u32 = 0xaaaaaaaaULL;
 	uint64_t u64 = 0xaaaaaaaaaaaaaaaaULL;
 
-	const uint_t val(0xd03ULL); // prime
+	const uinteger_t val(0xd03ULL); // prime
 
 	EXPECT_EQ(t   %  val, true);
 	EXPECT_EQ(f   %  val, false);
-	EXPECT_EQ(u8  %  val, uint_t(0xaaULL));
-	EXPECT_EQ(u16 %  val, uint_t(0x183ULL));
-	EXPECT_EQ(u32 %  val, uint_t(0x249ULL));
-	EXPECT_EQ(u64 %  val, uint_t(0xc7fULL));
+	EXPECT_EQ(u8  %  val, uinteger_t(0xaaULL));
+	EXPECT_EQ(u16 %  val, uinteger_t(0x183ULL));
+	EXPECT_EQ(u32 %  val, uinteger_t(0x249ULL));
+	EXPECT_EQ(u64 %  val, uinteger_t(0xc7fULL));
 
 	EXPECT_EQ(t   %= val, true);
 	EXPECT_EQ(f   %= val, false);
