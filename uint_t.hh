@@ -1298,36 +1298,32 @@ public:
 		return 0;
 	}
 
-	static uint_t& long_add(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& long_add(uint_t& lhs, const uint_t& rhs) {
 		// Needs optimized implementation.
-		return long_add(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_add(lhs, lhs, rhs);
 	}
 
-	static uint_t& long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& long_add(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
-		if (lhs_start > lhs_sz) lhs_start = lhs_sz;
-		if (rhs_start > rhs_sz) rhs_start = rhs_sz;
-
-		auto lhs_rsz = lhs_sz - lhs_start;
-		auto rhs_rsz = rhs_sz - rhs_start;
-		auto result_sz = std::max(lhs_rsz, rhs_rsz) + result_start;
+		auto result_sz = std::max(lhs_sz, rhs_sz);
 		result.reserve(result_sz + 1);
 		result.resize(result_sz, 0);
 
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
-		auto lhs_it = lhs.begin() + lhs_start;
+		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
-		auto rhs_it = rhs.begin() + rhs_start;
+
+		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
-		auto it = result.begin() + result_start;
+		auto it = result.begin();
 		auto it_e = result.begin() + result_sz;
 
 		digit carry = 0;
-		if (lhs_rsz > rhs_rsz) {
+		if (lhs_sz > rhs_sz) {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
 				assert(it != it_e);
 				assert(lhs_it != lhs_it_e);
@@ -1359,7 +1355,7 @@ public:
 		return result;
 	}
 
-	static uint_t& add(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& add(uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			return lhs;
@@ -1369,10 +1365,10 @@ public:
 			return lhs;
 		}
 
-		return long_add(lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_add(lhs, rhs);
 	}
 
-	static uint_t& add(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& add(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
@@ -1383,46 +1379,41 @@ public:
 			return result;
 		}
 
-		return long_add(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_add(result, lhs, rhs);
 	}
 
-	static uint_t add(const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t add(const uint_t& lhs, const uint_t& rhs) {
 		uint_t result;
-		add(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		add(result, lhs, rhs);
 		return result;
 	}
 
-	static uint_t& long_sub(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& long_sub(uint_t& lhs, const uint_t& rhs) {
 		// Needs optimized implementation.
-		return long_sub(lhs, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_sub(lhs, lhs, rhs);
 	}
 
-	static uint_t& long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& long_sub(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
 
-		if (rhs_start > rhs_sz) rhs_start = rhs_sz;
-		if (lhs_start > lhs_sz) lhs_start = lhs_sz;
-
-		auto lhs_rsz = lhs_sz - lhs_start;
-		auto rhs_rsz = rhs_sz - rhs_start;
-		auto result_sz = std::max(lhs_rsz, rhs_rsz) + result_start;
+		auto result_sz = std::max(lhs_sz, rhs_sz);
 		result.reserve(result_sz + 1);
 		result.resize(result_sz, 0);
 
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
-		auto lhs_it = lhs.begin() + lhs_start;
+		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
 
-		auto rhs_it = rhs.begin() + rhs_start;
+		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
-		auto it = result.begin() + result_start;
+		auto it = result.begin();
 		auto it_e = result.begin() + result_sz;
 
 		digit borrow = 0;
-		if (lhs_rsz > rhs_rsz) {
+		if (lhs_sz > rhs_sz) {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
 				assert(it != it_e);
 				assert(lhs_it != lhs_it_e);
@@ -1451,28 +1442,28 @@ public:
 		return result;
 	}
 
-	static uint_t& sub(uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& sub(uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			return lhs;
 		}
 
-		return long_sub(lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_sub(lhs, rhs);
 	}
 
-	static uint_t& sub(uint_t& result, const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t& sub(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
 		// First try saving some calculations:
 		if (!rhs) {
 			result = lhs;
 			return result;
 		}
 
-		return long_sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		return long_sub(result, lhs, rhs);
 	}
 
-	static uint_t sub(const uint_t& lhs, const uint_t& rhs, std::size_t result_start=0, std::size_t lhs_start=0, std::size_t rhs_start=0) {
+	static uint_t sub(const uint_t& lhs, const uint_t& rhs) {
 		uint_t result;
-		sub(result, lhs, rhs, result_start, lhs_start, rhs_start);
+		sub(result, lhs, rhs);
 		return result;
 	}
 
@@ -1588,7 +1579,8 @@ public:
 			const uint_t rhs_slice(rhs, rhs_begin, rhs_begin + slice_size);
 			uint_t p;
 			karatsuba_mult(p, lhs, rhs_slice, cutoff);
-			add(r, r, p, shift, shift);
+			uint_t rs(r, shift, 0);
+			add(rs, rs, p);
 			shift += slice_size;
 			rhs_sz -= slice_size;
 			rhs_begin += slice_size;
@@ -1662,7 +1654,8 @@ public:
 		BD.append(AC);
 
 		// And add AD_BC to the middle: (AC           BD) + (    AD + BC    ):
-		add(BD, BD, AD_BC, shift, shift);
+		uint_t BDs(BD, shift, 0);
+		add(BDs, BDs, AD_BC);
 
 		result = std::move(BD);
 
