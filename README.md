@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/Kronuz/uint_t.svg?branch=master)](https://travis-ci.org/Kronuz/uint_t)
 
-An unsigned integer type for C++
+### An arbitrary precision unsigned integer type for C++
 
 This is simple implementation of an unsigned integer type in C++.
 It's meant to be used like a standard uintN_t, except with a larger bit
