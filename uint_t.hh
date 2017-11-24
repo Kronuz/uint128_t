@@ -151,6 +151,8 @@ public:
 	}
 
 	std::size_t grow(std::size_t n) {
+		// expands the vector using a growth factor
+		// and returns the new capacity.
 		auto cc = _value.capacity();
 		if (n >= cc) {
 			cc = n * growth_factor;
@@ -189,14 +191,40 @@ public:
 	}
 
 	void prepend(std::size_t sz, const digit& c) {
+		// Efficiently prepend by growing backwards by growth factor
 		auto min = std::min(_begin, sz);
 		if (min) {
-			std::fill(_value.begin() + _begin - min, _value.begin() + _begin, c);
+			// If there is some space before `_begin`, we try using it first:
 			_begin -= min;
+			std::fill_n(_value.begin() + _begin, min, c);
 			sz -= min;
 		}
 		if (sz) {
-			// _begin should be 0 in here
+			assert (_begin == 0); // _begin should be 0 in here
+			// If there's still more room needed, we grow the vector:
+			// Ex.: grow using prepend(3, y)
+			//    sz = 3
+			//    _begin = 0  (B)
+			//    _end = 1  (E)
+			// initially (capacity == 12):
+			//              |xxxxxxxxxx- |
+			//              B           E
+			// after reclaiming space after `_end` (same capacity == 12):
+			//              |xxxxxxxxxx  |
+			//              B
+			//    _end = 0
+			//    csz = 10
+			// grow returns the new capacity (22)
+			//    isz = 12  (22 - 10)
+			//    _begin = 9  (12 - 3)
+			// after (capacity == (12 + 3) * 1.5 == 22):
+			//    |---------yyyxxxxxxxxxx|
+			//              B
+			if (_end) {
+				// reclaim space after `_end`
+				_value.resize(_end);
+				_end = 0;
+			}
 			auto csz = _value.size();
 			auto isz = grow(csz + sz) - csz;
 			_value.insert(_value.begin(), isz, c);
@@ -214,19 +242,24 @@ public:
 	}
 
 	void append(std::size_t sz, const digit& c) {
+		// Efficiently append by growing by growth factor
+		if (_end) {
+			// reclaim space after `_end`
+			_value.resize(_end);
+			_end = 0;
+		}
 		auto nsz = _value.size() + sz;
 		grow(nsz);
 		_value.resize(nsz, c);
 	}
 
 	void append(const digit& c) {
-		grow(_value.size() + 1);
-		_value.push_back(c);
+		append(1, c);
 	}
 
 	void append(const uint_t& num) {
-		grow(_value.size() + num.size());
-		_value.insert(end(), num.begin(), num.end());
+		append(num.size(), 0);
+		std::copy(num.begin(), num.end(), end());
 	}
 
 	container::iterator begin() noexcept {
