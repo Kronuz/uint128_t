@@ -330,17 +330,17 @@ private:
 	#if defined HAVE____BUILTIN_CLZLL
 		if (digit_octets == sizeof(unsigned long long)) {
 			return x ? digit_bits - __builtin_clzll(x) : 1;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_CLZL
 		if (digit_octets == sizeof(unsigned long)) {
 			return x ? digit_bits - __builtin_clzl(x) : 1;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_CLZ
 		if (digit_octets == sizeof(unsigned)) {
 			return x ? digit_bits - __builtin_clz(x) : 1;
-		} else
+		}
 	#endif
 		{
 			digit c = x ? 0 : 1;
@@ -358,28 +358,28 @@ private:
 			digit h;
 			digit l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
 			return h;
-		} else
+		}
 	#endif
 	#if defined HAVE___UMUL64
 		if (digit_bits == 32) {
 			digit h;
 			digit l = _umul64(x, y, &h);  // _umul64(x, y, *hi) -> lo
 			return h;
-		} else
+		}
 	#endif
 	#if defined HAVE___UMUL32
 		if (digit_bits == 16) {
 			digit h;
 			digit l = _umul32(x, y, &h);  // _umul32(x, y, *hi) -> lo
 			return h;
-		} else
+		}
 	#endif
 	#if defined HAVE____INT128_T
 		if (digit_bits == 64) {
 			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y);
 			*lo = r;
 			return r >> digit_bits;
-		} else
+		}
 	#endif
 		if (digit_bits == 64) {
 			digit x0 = x & 0xffffffffUL;
@@ -393,18 +393,18 @@ private:
 
 			*lo = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
-		} else if (digit_bits == 32) {
+		} if (digit_bits == 32) {
 			auto r = static_cast<std::uint64_t>(x) * static_cast<std::uint64_t>(y);
 			*lo = r;
-			return r >> digit_bits;
-		} else if (digit_bits == 16) {
+			return r >> 32;
+		} if (digit_bits == 16) {
 			auto r = static_cast<std::uint32_t>(x) * static_cast<std::uint32_t>(y);
 			*lo = r;
-			return r >> digit_bits;
-		} else if (digit_bits == 8) {
+			return r >> 16;
+		} if (digit_bits == 8) {
 			auto r = static_cast<std::uint16_t>(x) * static_cast<std::uint16_t>(y);
 			*lo = r;
-			return r >> digit_bits;
+			return r >> 8;
 		}
 	}
 
@@ -414,28 +414,28 @@ private:
 			digit h;
 			digit l = _umul128(x, y, &h);  // _umul128(x, y, *hi) -> lo
 			return h + _addcarry_u64(c, l, a, lo);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___UMUL64 && defined HAVE___ADDCARRY_U32
 		if (digit_bits == 32) {
 			digit h;
 			digit l = _umul64(x, y, &h);  // _umul64(x, y, *hi) -> lo
 			return h + _addcarry_u32(c, l, a, lo);  // _addcarry_u32(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___UMUL32 && defined HAVE___ADDCARRY_U16
 		if (digit_bits == 16) {
 			digit h;
 			digit l = _umul32(x, y, &h);  // _umul32(x, y, *hi) -> lo
 			return h + _addcarry_u16(c, l, a, lo);  // _addcarry_u16(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE____INT128_T
 		if (digit_bits == 64) {
 			auto r = static_cast<__uint128_t>(x) * static_cast<__uint128_t>(y) + static_cast<__uint128_t>(a) + static_cast<__uint128_t>(c);
 			*lo = r;
 			return r >> digit_bits;
-		} else
+		}
 	#endif
 		if (digit_bits == 64) {
 			digit x0 = x & 0xffffffffUL;
@@ -449,18 +449,21 @@ private:
 
 			*lo = (w << 32) + (u & 0xffffffffUL); // low
 			return (x1 * y1) + (v >> 32) + (w >> 32); // high
-		} else if (digit_bits == 32) {
+		}
+		if (digit_bits == 32) {
 			auto r = static_cast<std::uint64_t>(x) * static_cast<std::uint64_t>(y) + static_cast<std::uint64_t>(a) + static_cast<std::uint64_t>(c);
 			*lo = r;
-			return r >> digit_bits;
-		} else if (digit_bits == 16) {
+			return r >> 32;
+		}
+		if (digit_bits == 16) {
 			auto r = static_cast<std::uint32_t>(x) * static_cast<std::uint32_t>(y) + static_cast<std::uint32_t>(a) + static_cast<std::uint32_t>(c);
 			*lo = r;
-			return r >> digit_bits;
-		} else if (digit_bits == 8) {
+			return r >> 16;
+		}
+		if (digit_bits == 8) {
 			auto r = static_cast<std::uint16_t>(x) * static_cast<std::uint16_t>(y) + static_cast<std::uint16_t>(a) + static_cast<std::uint16_t>(c);
 			*lo = r;
-			return r >> digit_bits;
+			return r >> 8;
 		}
 	}
 
@@ -473,7 +476,7 @@ private:
 
 			*result = q;
 			return r;
-		} else
+		}
 	#endif
 		if (digit_bits == 64) {
 			// quotient
@@ -514,22 +517,25 @@ private:
 
 			*result = q;
 			return r;
-		} else if (digit_bits == 32) {
-			auto x = static_cast<std::uint64_t>(x_hi) << digit_bits | static_cast<std::uint64_t>(x_lo);
+		}
+		if (digit_bits == 32) {
+			auto x = static_cast<std::uint64_t>(x_hi) << 32 | static_cast<std::uint64_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
 			*result = q;
 			return r;
-		} else if (digit_bits == 16) {
-			auto x = static_cast<std::uint32_t>(x_hi) << digit_bits | static_cast<std::uint32_t>(x_lo);
+		}
+		if (digit_bits == 16) {
+			auto x = static_cast<std::uint32_t>(x_hi) << 16 | static_cast<std::uint32_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
 			*result = q;
 			return r;
-		} else if (digit_bits == 8) {
-			auto x = static_cast<std::uint16_t>(x_hi) << digit_bits | static_cast<std::uint16_t>(x_lo);
+		}
+		if (digit_bits == 8) {
+			auto x = static_cast<std::uint16_t>(x_hi) << 8 | static_cast<std::uint16_t>(x_lo);
 			digit q = x / y;
 			digit r = x % y;
 
@@ -542,45 +548,45 @@ private:
 	#if defined HAVE___ADDCARRY_U64
 		if (digit_bits == 64) {
 			return _addcarry_u64(c, x, y, result);  // _addcarry_u64(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___ADDCARRY_U32
 		if (digit_bits == 32) {
 			return _addcarry_u32(c, x, y, result);  // _addcarry_u32(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___ADDCARRY_U16
 		if (digit_bits == 16) {
 			return _addcarry_u16(c, x, y, result);  // _addcarry_u16(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_ADDCLL
 		if (digit_octets == sizeof(unsigned long long)) {
 			unsigned long long carryout;
 			*result = __builtin_addcll(x, y, c, &carryout);  // __builtin_addcll(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_ADDCL
 		if (digit_octets == sizeof(unsigned long)) {
 			unsigned long carryout;
 			*result = __builtin_addcl(x, y, c, &carryout);  // __builtin_addcl(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_ADDC
 		if (digit_octets == sizeof(unsigned)) {
 			unsigned carryout;
 			*result = __builtin_addc(x, y, c, &carryout);  // __builtin_addc(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____INT128_T
 		if (digit_bits == 64) {
 			auto r = static_cast<__uint128_t>(x) + static_cast<__uint128_t>(y) + static_cast<__uint128_t>(c);
 			*result = r;
 			return static_cast<bool>(r >> digit_bits);
-		} else
+		}
 	#endif
 		if (digit_bits == 64) {
 			digit x0 = x & 0xffffffffUL;
@@ -592,18 +598,21 @@ private:
 			auto v = x1 + y1 + static_cast<bool>(u >> 32);
 			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
-		} else if (digit_bits == 32) {
+		}
+		if (digit_bits == 32) {
 			auto r = static_cast<std::uint64_t>(x) + static_cast<std::uint64_t>(y) + static_cast<std::uint64_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
-		} else if (digit_bits == 16) {
+			return static_cast<bool>(r >> 32);
+		}
+		if (digit_bits == 16) {
 			auto r = static_cast<std::uint32_t>(x) + static_cast<std::uint32_t>(y) + static_cast<std::uint32_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
-		} else if (digit_bits == 8) {
+			return static_cast<bool>(r >> 16);
+		}
+		if (digit_bits == 8) {
 			auto r = static_cast<std::uint16_t>(x) + static_cast<std::uint16_t>(y) + static_cast<std::uint16_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
+			return static_cast<bool>(r >> 8);
 		}
 	}
 
@@ -611,45 +620,45 @@ private:
 	#if defined HAVE___SUBBORROW_U64
 		if (digit_bits == 64) {
 			return _subborrow_u64(c, x, y, result);  // _subborrow_u64(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___SUBBORROW_U32
 		if (digit_bits == 64) {
 			return _subborrow_u32(c, x, y, result);  // _subborrow_u32(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE___SUBBORROW_U16
 		if (digit_bits == 64) {
 			return _subborrow_u16(c, x, y, result);  // _subborrow_u16(carryin, x, y, *sum) -> carryout
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_SUBCLL
 		if (digit_octets == sizeof(unsigned long long)) {
 			unsigned long long carryout;
 			*result = __builtin_subcll(x, y, c, &carryout);  // __builtin_subcll(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_SUBCL
 		if (digit_octets == sizeof(unsigned long)) {
 			unsigned long carryout;
 			*result = __builtin_subcl(x, y, c, &carryout);  // __builtin_subcl(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____BUILTIN_SUBC
 		if (digit_octets == sizeof(unsigned)) {
 			unsigned carryout;
 			*result = __builtin_subc(x, y, c, &carryout);  // __builtin_subc(x, y, carryin, *carryout) -> sum
 			return carryout;
-		} else
+		}
 	#endif
 	#if defined HAVE____INT128_T
 		if (digit_bits == 64) {
 			auto r = static_cast<__uint128_t>(x) - static_cast<__uint128_t>(y) - static_cast<__uint128_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
-		} else
+			return static_cast<bool>(r >> 64);
+		}
 	#endif
 		if (digit_bits == 64) {
 			digit x0 = x & 0xffffffffUL;
@@ -661,18 +670,21 @@ private:
 			auto v = x1 - y1 - static_cast<bool>(u >> 32);
 			*result = (v << 32) + (u & 0xffffffffUL);
 			return static_cast<bool>(v >> 32);
-		} else if (digit_bits == 32) {
+		}
+		if (digit_bits == 32) {
 			auto r = static_cast<std::uint64_t>(x) - static_cast<std::uint64_t>(y) - static_cast<std::uint64_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
-		} else if (digit_bits == 16) {
+			return static_cast<bool>(r >> 32);
+		}
+		if (digit_bits == 16) {
 			auto r = static_cast<std::uint32_t>(x) - static_cast<std::uint32_t>(y) - static_cast<std::uint32_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
-		} else if (digit_bits == 8) {
+			return static_cast<bool>(r >> 16);
+		}
+		if (digit_bits == 8) {
 			auto r = static_cast<std::uint16_t>(x) - static_cast<std::uint16_t>(y) - static_cast<std::uint16_t>(c);
 			*result = r;
-			return static_cast<bool>(r >> digit_bits);
+			return static_cast<bool>(r >> 8);
 		}
 	}
 
