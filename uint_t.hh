@@ -1144,6 +1144,7 @@ public:
 		// resized `lhs` if `result` is also `lhs`.
 		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
+
 		auto it = result.begin() + shifts;
 		auto it_e = result.begin() + result_sz;
 
@@ -1413,6 +1414,7 @@ public:
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin() + lhs_start;
 		auto lhs_it_e = lhs.begin() + lhs_sz;
+
 		auto rhs_it = rhs.begin() + rhs_start;
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
