@@ -129,6 +129,8 @@ public:
 	static constexpr std::size_t half_digit_octets = sizeof(half_digit);   // number of octets per half_digit
 	static constexpr std::size_t half_digit_bits = half_digit_octets * 8;  // number of bits per half_digit
 
+	using container = std::vector<digit>;
+
 private:
 	static_assert(digit_octets == half_digit_octets * 2, "half_digit must be exactly half the size of digit");
 
@@ -137,8 +139,8 @@ private:
 
 	std::size_t _begin;
 	std::size_t _end;
-	std::vector<digit> _value_instance;
-	std::vector<digit>& _value;
+	container _value_instance;
+	container& _value;
 	bool _carry;
 
 public:
@@ -227,51 +229,51 @@ public:
 		_value.insert(end(), num.begin(), num.end());
 	}
 
-	std::vector<digit>::iterator begin() noexcept {
+	container::iterator begin() noexcept {
 		return _value.begin() + _begin;
 	}
 
-	std::vector<digit>::const_iterator begin() const noexcept {
+	container::const_iterator begin() const noexcept {
 		return _value.cbegin() + _begin;
 	}
 
-	std::vector<digit>::iterator end() noexcept {
+	container::iterator end() noexcept {
 		return _end ? _value.begin() + _end : _value.end();
 	}
 
-	std::vector<digit>::const_iterator end() const noexcept {
+	container::const_iterator end() const noexcept {
 		return _end ? _value.cbegin() + _end : _value.cend();
 	}
 
-	std::vector<digit>::reverse_iterator rbegin() noexcept {
-		return _end ? std::vector<digit>::reverse_iterator(_value.begin() + _end) : _value.rbegin();
+	container::reverse_iterator rbegin() noexcept {
+		return _end ? container::reverse_iterator(_value.begin() + _end) : _value.rbegin();
 	}
 
-	std::vector<digit>::const_reverse_iterator rbegin() const noexcept {
-		return _end ? std::vector<digit>::const_reverse_iterator(_value.cbegin() + _end) : _value.crbegin();
+	container::const_reverse_iterator rbegin() const noexcept {
+		return _end ? container::const_reverse_iterator(_value.cbegin() + _end) : _value.crbegin();
 	}
 
-	std::vector<digit>::reverse_iterator rend() noexcept {
-		return std::vector<digit>::reverse_iterator(_value.begin() + _begin);
+	container::reverse_iterator rend() noexcept {
+		return container::reverse_iterator(_value.begin() + _begin);
 	}
 
-	std::vector<digit>::const_reverse_iterator rend() const noexcept {
-		return std::vector<digit>::const_reverse_iterator(_value.cbegin() + _begin);
+	container::const_reverse_iterator rend() const noexcept {
+		return container::const_reverse_iterator(_value.cbegin() + _begin);
 	}
 
-	std::vector<digit>::reference front() {
+	container::reference front() {
 		return *begin();
 	}
 
-	std::vector<digit>::const_reference front() const {
+	container::const_reference front() const {
 		return *begin();
 	}
 
-	std::vector<digit>::reference back() {
+	container::reference back() {
 		return *rbegin();
 	}
 
-	std::vector<digit>::const_reference back() const {
+	container::const_reference back() const {
 		return *rbegin();
 	}
 
@@ -1845,7 +1847,7 @@ public:
 	uint_t& operator=(const uint_t& o) {
 		_begin = 0;
 		_end = 0;
-		_value = std::vector<digit>(o.begin(), o.end());
+		_value = container(o.begin(), o.end());
 		_carry = o._carry;
 		return *this;
 	}
