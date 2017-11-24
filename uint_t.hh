@@ -258,8 +258,9 @@ public:
 	}
 
 	void append(const uint_t& num) {
-		append(num.size(), 0);
-		std::copy(num.begin(), num.end(), end());
+		auto sz = num.size();
+		append(sz, 0);
+		std::copy(num.begin(), num.end(), end() - sz);
 	}
 
 	container::iterator begin() noexcept {
