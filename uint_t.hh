@@ -838,10 +838,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		auto it = result.begin();
 
@@ -904,10 +904,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		auto it = result.begin();
 
@@ -969,10 +969,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		auto it = result.begin();
 
@@ -1015,7 +1015,7 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` if `result` is also `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		for (; lhs_it != lhs_it_e; ++lhs_it) {
 			*lhs_it = ~*lhs_it;
@@ -1037,10 +1037,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` if `result` is also `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto it = result.begin();
-		auto it_e = result.begin() + result_sz;
+		auto it_e = it + result_sz;
 
 		for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
 			*it = ~*lhs_it;
@@ -1123,7 +1123,7 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` if `result` is also `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto it = result.begin() + shifts;
 
@@ -1223,9 +1223,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` if `result` is also `lhs`.
 		auto lhs_rit = lhs.rbegin();
-		auto lhs_rit_e = lhs.rbegin() + lhs_sz - shifts;
+		auto lhs_rit_e = lhs_rit + lhs_sz - shifts;
+
 		auto rit = result.rbegin();
-		auto rit_e = result.rbegin() + result_sz;
+		auto rit_e = rit + result_sz;
 
 		if (shift) {
 			digit shifted = 0;
@@ -1287,10 +1288,10 @@ public:
 		// not using `end()` because resize of `lhs.resize()` could have
 		// resized `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		digit carry = 0;
 		if (lhs_sz < rhs_sz) {
@@ -1334,10 +1335,10 @@ public:
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		auto it = result.begin();
 
@@ -1412,17 +1413,16 @@ public:
 		auto rhs_sz = rhs.size();
 
 		if (lhs_sz < rhs_sz) {
-			lhs.reserve(rhs_sz + 1);
 			lhs.resize(rhs_sz, 0); // grow
 		}
 
 		// not using `end()` because resize of `lhs.resize()` could have
 		// resized `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		digit borrow = 0;
 		if (lhs_sz < rhs_sz) {
@@ -1453,16 +1453,15 @@ public:
 		auto rhs_sz = rhs.size();
 
 		auto result_sz = std::max(lhs_sz, rhs_sz);
-		result.reserve(result_sz + 1);
 		result.resize(result_sz, 0);
 
 		// not using `end()` because resize of `result.resize()` could have
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
-		auto lhs_it_e = lhs.begin() + lhs_sz;
+		auto lhs_it_e = lhs_it + lhs_sz;
 
 		auto rhs_it = rhs.begin();
-		auto rhs_it_e = rhs.begin() + rhs_sz;
+		auto rhs_it_e = rhs_it + rhs_sz;
 
 		auto it = result.begin();
 
