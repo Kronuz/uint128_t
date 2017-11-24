@@ -834,6 +834,7 @@ public:
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
+
 		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
@@ -889,6 +890,7 @@ public:
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
+
 		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
@@ -943,6 +945,7 @@ public:
 		// resized `lhs` or `rhs` if `result` is also either `rhs` or `lhs`.
 		auto lhs_it = lhs.begin();
 		auto lhs_it_e = lhs.begin() + lhs_sz;
+
 		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.begin() + rhs_sz;
 
@@ -1238,16 +1241,22 @@ public:
 	static int compare(const uint_t& lhs, const uint_t& rhs) {
 		auto lhs_sz = lhs.size();
 		auto rhs_sz = rhs.size();
+
 		if (lhs_sz > rhs_sz) return 1;
 		if (lhs_sz < rhs_sz) return -1;
+
 		auto lhs_rit = lhs.rbegin();
 		auto lhs_rit_e = lhs.rend();
+
 		auto rhs_rit = rhs.rbegin();
+
 		for (; lhs_rit != lhs_rit_e && *lhs_rit == *rhs_rit; ++lhs_rit, ++rhs_rit);
+
 		if (lhs_rit != lhs_rit_e) {
 			if (*lhs_rit > *rhs_rit) return 1;
 			if (*lhs_rit < *rhs_rit) return -1;
 		}
+
 		return 0;
 	}
 
