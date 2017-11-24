@@ -807,8 +807,25 @@ private:
 public:
 #endif
 	static uint_t& bitwise_and(uint_t& lhs, const uint_t& rhs) {
-		// Needs optimized implementation.
-		return bitwise_and(lhs, lhs, rhs);
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		if (lhs_sz > rhs_sz) {
+			lhs.resize(rhs_sz); // shrink
+		}
+
+		auto lhs_it = lhs.begin();
+		auto lhs_it_e = lhs.end();
+
+		auto rhs_it = rhs.begin();
+
+		for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it) {
+			*lhs_it &= *rhs_it;
+		}
+
+		// Finish up
+		lhs.trim();
+		return lhs;
 	}
 
 	static uint_t& bitwise_and(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
@@ -863,8 +880,24 @@ public:
 	}
 
 	static uint_t& bitwise_or(uint_t& lhs, const uint_t& rhs) {
-		// Needs optimized implementation.
-		return bitwise_or(lhs, lhs, rhs);
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		if (lhs_sz < rhs_sz) {
+			lhs.resize(rhs_sz, 0); // grow
+		}
+
+		auto lhs_it = lhs.begin();
+
+		auto rhs_it = rhs.begin();
+		auto rhs_it_e = rhs.end();
+		for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
+			*lhs_it |= *rhs_it;
+		}
+
+		// Finish up
+		lhs.trim();
+		return lhs;
 	}
 
 	static uint_t& bitwise_or(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
@@ -918,8 +951,24 @@ public:
 	}
 
 	static uint_t& bitwise_xor(uint_t& lhs, const uint_t& rhs) {
-		// Needs optimized implementation.
-		return bitwise_xor(lhs, lhs, rhs);
+		auto lhs_sz = lhs.size();
+		auto rhs_sz = rhs.size();
+
+		if (lhs_sz < rhs_sz) {
+			lhs.resize(rhs_sz, 0); // grow
+		}
+
+		auto lhs_it = lhs.begin();
+
+		auto rhs_it = rhs.begin();
+		auto rhs_it_e = rhs.end();
+		for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
+			*lhs_it ^= *rhs_it;
+		}
+
+		// Finish up
+		lhs.trim();
+		return lhs;
 	}
 
 	static uint_t& bitwise_xor(uint_t& result, const uint_t& lhs, const uint_t& rhs) {
