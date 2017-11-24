@@ -847,22 +847,16 @@ public:
 
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(rhs_it != rhs.end());
 				*it = *lhs_it & *rhs_it;
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				*it = 0;
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(lhs_it != lhs.end());
 				*it = *lhs_it & *rhs_it;
 			}
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = 0;
 			}
 		}
@@ -890,6 +884,7 @@ public:
 
 		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.end();
+
 		for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
 			*lhs_it |= *rhs_it;
 		}
@@ -918,22 +913,16 @@ public:
 
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(rhs_it != rhs.end());
 				*it = *lhs_it | *rhs_it;
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				*it = *rhs_it;
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(lhs_it != lhs.end());
 				*it = *lhs_it | *rhs_it;
 			}
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = *lhs_it;
 			}
 		}
@@ -960,6 +949,7 @@ public:
 
 		auto rhs_it = rhs.begin();
 		auto rhs_it_e = rhs.end();
+
 		for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
 			*lhs_it ^= *rhs_it;
 		}
@@ -988,22 +978,16 @@ public:
 
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(rhs_it != rhs.end());
 				*it = *lhs_it ^ *rhs_it;
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				*it = *rhs_it;
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(lhs_it != lhs.end());
 				*it = *lhs_it ^ *rhs_it;
 			}
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = *lhs_it;
 			}
 		}
@@ -1059,7 +1043,6 @@ public:
 		auto it_e = result.begin() + result_sz;
 
 		for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-			assert(it != result.end());
 			*it = ~*lhs_it;
 		}
 		for (; it != it_e; ++it) {
@@ -1147,7 +1130,6 @@ public:
 		if (shift) {
 			digit shifted = 0;
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				auto v = (*lhs_it << shift) | shifted;
 				shifted = *lhs_it >> (_digit_bits - shift);
 				*it = v;
@@ -1157,7 +1139,6 @@ public:
 			}
 		} else {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = *lhs_it;
 			}
 		}
@@ -1314,20 +1295,16 @@ public:
 		digit carry = 0;
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++rhs_it, ++lhs_it) {
-				assert(rhs_it != rhs.end());
 				carry = _addcarry(*lhs_it, *rhs_it, carry, &*lhs_it);
 			}
 			for (; carry && rhs_it != rhs_it_e; ++rhs_it, ++lhs_it) {
-				assert(lhs_it != lhs.end());
 				carry = _addcarry(0, *rhs_it, carry, &*lhs_it);
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++lhs_it) {
-				assert(lhs_it != lhs.end());
 				*lhs_it = *rhs_it;
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++lhs_it) {
-				assert(lhs_it != lhs.end());
 				carry = _addcarry(*lhs_it, *rhs_it, carry, &*lhs_it);
 			}
 			for (; carry && lhs_it != lhs_it_e; ++lhs_it) {
@@ -1367,30 +1344,22 @@ public:
 		digit carry = 0;
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(rhs_it != rhs.end());
 				carry = _addcarry(*lhs_it, *rhs_it, carry, &*it);
 			}
 			for (; carry && rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				carry = _addcarry(0, *rhs_it, carry, &*it);
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				*it = *rhs_it;
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(lhs_it != lhs.end());
 				carry = _addcarry(*lhs_it, *rhs_it, carry, &*it);
 			}
 			for (; carry && lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				carry = _addcarry(*lhs_it, 0, carry, &*it);
 			}
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = *lhs_it;
 			}
 		}
@@ -1458,21 +1427,16 @@ public:
 		digit borrow = 0;
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it) {
-				assert(lhs_it != lhs.end());
-				assert(rhs_it != rhs.end());
 				borrow = _subborrow(*lhs_it, *rhs_it, borrow, &*lhs_it);
 			}
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
-				assert(lhs_it != lhs.end());
 				borrow = _subborrow(0, *rhs_it, borrow, &*lhs_it);
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it) {
-				assert(lhs_it != lhs.end());
 				borrow = _subborrow(*lhs_it, *rhs_it, borrow, &*lhs_it);
 			}
 			for (; borrow && lhs_it != lhs_it_e; ++lhs_it) {
-				assert(lhs_it != lhs.end());
 				borrow = _subborrow(*lhs_it, 0, borrow, &*lhs_it);
 			}
 		}
@@ -1505,26 +1469,19 @@ public:
 		digit borrow = 0;
 		if (lhs_sz < rhs_sz) {
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(rhs_it != rhs.end());
 				borrow = _subborrow(*lhs_it, *rhs_it, borrow, &*it);
 			}
 			for (; rhs_it != rhs_it_e; ++rhs_it, ++it) {
-				assert(it != result.end());
 				borrow = _subborrow(0, *rhs_it, borrow, &*it);
 			}
 		} else {
 			for (; rhs_it != rhs_it_e; ++lhs_it, ++rhs_it, ++it) {
-				assert(it != result.end());
-				assert(lhs_it != lhs.end());
 				borrow = _subborrow(*lhs_it, *rhs_it, borrow, &*it);
 			}
 			for (; borrow && lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				borrow = _subborrow(*lhs_it, 0, borrow, &*it);
 			}
 			for (; lhs_it != lhs_it_e; ++lhs_it, ++it) {
-				assert(it != result.end());
 				*it = *lhs_it;
 			}
 		}
