@@ -314,19 +314,6 @@ public:
 private:
 	// Optimized primitives for operations
 
-	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
-	void _uint_t(const T& value) {
-		append(static_cast<digit>(value));
-	}
-
-	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value>>
-	void _uint_t(const T& value, Args... args) {
-		_uint_t(args...);
-		append(static_cast<digit>(value));
-	}
-
-	//
-
 	static digit _bits(digit x) {
 	#if defined HAVE____BUILTIN_CLZLL
 		if (digit_octets == sizeof(unsigned long long)) {
@@ -1834,6 +1821,17 @@ public:
 private:
 	// Constructors
 
+	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
+	void _uint_t(const T& value) {
+		append(static_cast<digit>(value));
+	}
+
+	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
+	void _uint_t(const T& value, Args... args) {
+		_uint_t(args...);
+		append(static_cast<digit>(value));
+	}
+
 	// This constructor creates a window view of the _value
 	uint_t(const uint_t& o, std::size_t begin, std::size_t end) :
 		_begin(begin),
@@ -1862,7 +1860,7 @@ public:
 		_value(_value_instance),
 		_carry(std::move(o._carry)) { }
 
-	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+	template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 	uint_t(const T& value) :
 		_begin(0),
 		_end(0),
@@ -1873,7 +1871,7 @@ public:
 		}
 	}
 
-	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 	uint_t(const T& value, Args... args) :
 		_begin(0),
 		_end(0),
@@ -1881,6 +1879,19 @@ public:
 		_carry(false) {
 		_uint_t(args...);
 		append(static_cast<digit>(value));
+		trim();
+	}
+
+	template <typename T, typename... Args, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
+	uint_t(std::initializer_list<T> list) :
+		_begin(0),
+		_end(0),
+		_value(_value_instance),
+		_carry(false) {
+		reserve(list.size());
+		for (const auto& value : list) {
+			append(static_cast<digit>(value));
+		}
 		trim();
 	}
 
@@ -2282,135 +2293,135 @@ namespace std {  // This is probably not a good idea
 // If the output is not a bool, casts to type T
 
 // Bitwise Operators
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator&(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) & rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator&=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs & lhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator|(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) | rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator|=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs | lhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator^(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) ^ rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator^=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs ^ lhs);
 }
 
 // Bitshift operators
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 inline uint_t operator<<(T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) << rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator<<=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs << rhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 inline uint_t operator>>(T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) >> rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator>>=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs >> rhs);
 }
 
 // Comparison Operators
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator==(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) == rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator!=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) != rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator>(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) > rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator<(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) < rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator>=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) >= rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 bool operator<=(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) <= rhs;
 }
 
 // Arithmetic Operators
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator+(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) + rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator+=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs + lhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator-(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) - rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator-=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs - rhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator*(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) * rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator*=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(rhs * lhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator/(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) / rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator/=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs / rhs);
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 uint_t operator%(const T& lhs, const uint_t& rhs) {
 	return uint_t(lhs) % rhs;
 }
 
-template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value>>
+template <typename T, typename = typename std::enable_if_t<std::is_integral<T>::value and not std::is_same<T, std::decay_t<uint_t>>::value>>
 T& operator%=(T& lhs, const uint_t& rhs) {
 	return lhs = static_cast<T>(lhs % rhs);
 }
