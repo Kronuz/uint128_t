@@ -9,7 +9,7 @@ TEST(Accessor, bits) {
 		value <<= 1;
 	}
 
-	EXPECT_EQ(uinteger_t(0).bits(), 0);
+	EXPECT_EQ(uinteger_t(0).bits(), 0U);
 }
 
 TEST(Accessor, data) {
