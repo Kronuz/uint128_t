@@ -2,14 +2,63 @@
 
 [![Build Status](https://travis-ci.org/Kronuz/uinteger_t.svg?branch=master)](https://travis-ci.org/Kronuz/uinteger_t)
 
+
 ### An arbitrary precision unsigned integer type for C++
 
-This is simple implementation of an unsigned integer type in C++.
-It's meant to be used like a standard uintN_t, except with a larger bit
-size than those provided by C/C++.
+This is a header-only implementation of an arbitrary precision unsigned integer
+type in modern C++. It's meant to be used like a standard unsigned integer,
+except operations can use really big numbers and can take multiple base strings
+as inputs.
 
-Based upon Jason Lee's uint128_t module and modified by Kronuz to
-support any number of bits.
+
+#### Example
+
+``` cpp
+// example.cc
+// g++ -std=c++14 -o example example.cc
+
+#include <iostream>
+#include "uinteger_t.hh"
+
+int main() {
+    uinteger_t a = 3735879680;
+    uinteger_t b("beee", 16);  // string input (no base prefixes: '0b' or '0x')
+    uinteger_t num = a + b + 1;
+
+    std::cout << num             << std::endl;  // print directly
+    // => 3735928559
+
+    std::cout << num.str(2)     << std::endl;  // print as a string on a specific base
+    // => 11011110101011011011111011101111
+
+    std::cout << std::hex << num << std::endl;  // print using std::oct, std::dec, and std::hex
+    // => deadbeef
+
+    return 0;
+}
+```
+
+
+#### Compilation
+
+* g++ and clang++ are supported.
+* C++14 is required.
+
+
+## Internals
+
+Data is stored in a `std::vector<uint64_t>` in little-endian form, so `_value[0]`
+is the least significant digit. Operations are optimized for fast performance:
+
+* Addition and subtraction use regular (optimized) 64-bit operations with carry/borrow.
+
+* Shifts try to grow vector in the most efficient way, using a two direction growth
+  factor of 1.5.
+
+* Multiplication uses long multiplication for numbers < 1024 bits and uses Karatsuba
+  (and lopsided Karatsuba) for bigger numbers with a no-copying approach.
+
+* Division and modulus use long division from Knuth's Algorithm D.
 
 
 ## Author
@@ -17,6 +66,9 @@ support any number of bits.
 
 [![Follow on GitHub][github-follow-img]][github-follow-url]
 [![Follow on Twitter][twitter-follow-img]][twitter-follow-url]
+
+Based upon Jason Lee's uint128_t module and modified by Kronuz to
+support an arbitrary number of bits.
 
 
 ## License
