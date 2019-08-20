@@ -1991,7 +1991,7 @@ public:
 	}
 
 	template <typename T, std::size_t N>
-	explicit uinteger_t(T (&s)[N], int base=10) :
+	explicit uinteger_t(T (&&s)[N], int base=10) :
 		uinteger_t(s, N - 1, base) { }
 
 	explicit uinteger_t(const unsigned char* bytes, std::size_t sz, int base) :
